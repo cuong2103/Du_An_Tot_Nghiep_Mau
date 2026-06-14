@@ -1,0 +1,262 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Models\WorkSchedule;
+use App\Models\ScheduleOverride;
+use App\Models\DoctorProfile;
+use App\Models\Room;
+use App\Models\SystemLog;
+use Illuminate\Support\Facades\Auth;
+
+class WorkScheduleController extends Controller
+{
+    public function index(Request $request)
+    {
+        $doctors = DoctorProfile::with('user')
+            ->whereHas('user', fn($q) => $q->where('is_active', true))
+            ->get();
+
+        $rooms = Room::where('is_active', true)->orderBy('name')->get();
+
+        $query = WorkSchedule::with(['doctor.user', 'room'])
+            ->orderBy('day_of_week')
+            ->orderBy('start_time');
+
+        if ($request->filled('doctor_id')) {
+            $query->where('doctor_profile_id', $request->doctor_id);
+        }
+        if ($request->filled('room_id')) {
+            $query->where('room_id', $request->room_id);
+        }
+        if ($request->filled('day_of_week')) {
+            $query->where('day_of_week', $request->day_of_week);
+        }
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->status);
+        }
+
+        $schedules = $query->paginate(15)->withQueryString();
+
+        $overrides = ScheduleOverride::with(['doctor.user', 'room', 'createdBy'])
+            ->whereMonth('override_date', now()->month)
+            ->whereYear('override_date', now()->year)
+            ->orderBy('override_date')
+            ->get();
+
+        return view('admin.work-schedules.index', compact('schedules', 'doctors', 'rooms', 'overrides'));
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'doctor_profile_id' => 'required|exists:doctor_profiles,id',
+            'room_id' => 'required|exists:rooms,id',
+            'day_of_week' => 'required|integer|between:1,7',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'required|date_format:H:i|after:start_time',
+            'slot_duration_minutes' => 'required|integer|min:5|max:120',
+            'max_slots' => 'required|integer|min:1|max:100',
+            'is_active' => 'boolean'
+        ]);
+
+        $exists = WorkSchedule::where('doctor_profile_id', $request->doctor_profile_id)
+            ->where('room_id', $request->room_id)
+            ->where('day_of_week', $request->day_of_week)
+            ->exists();
+
+        if ($exists) {
+            return back()->with('error', 'Bác sĩ này đã có lịch tại phòng này vào thứ đã chọn.');
+        }
+
+        $schedule = WorkSchedule::create([
+            'doctor_profile_id' => $request->doctor_profile_id,
+            'room_id' => $request->room_id,
+            'day_of_week' => $request->day_of_week,
+            'start_time' => $request->start_time,
+            'end_time' => $request->end_time,
+            'slot_duration_minutes' => $request->slot_duration_minutes,
+            'max_slots' => $request->max_slots,
+            'is_active' => $request->has('is_active'),
+        ]);
+
+        SystemLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'WORK_SCHEDULE_CREATED',
+            'module' => 'work_schedule',
+            'ref_type' => 'work_schedule',
+            'ref_id' => $schedule->id,
+            'description' => 'Thêm ca trực cho bác sĩ ID ' . $schedule->doctor_profile_id,
+            'ip_address' => request()->ip()
+        ]);
+
+        return back()->with('success', 'Đã thêm ca trực thành công.');
+    }
+
+    public function show($id)
+    {
+        $schedule = WorkSchedule::with(['doctor.user', 'room'])->findOrFail($id);
+
+        // Lấy danh sách lịch hẹn sắp tới thuộc ca trực này
+        $upcomingAppointments = \App\Models\Appointment::with(['patientProfile.user'])
+            ->where('doctor_profile_id', $schedule->doctor_profile_id)
+            ->whereRaw('DAYOFWEEK(appointment_date) = ?', [$schedule->day_of_week])
+            ->where('appointment_date', '>=', now()->toDateString())
+            ->whereTime('appointment_time', '>=', $schedule->start_time)
+            ->whereTime('appointment_time', '<', $schedule->end_time)
+            ->orderBy('appointment_date')
+            ->orderBy('appointment_time')
+            ->paginate(15);
+
+        // Lấy lịch làm việc cả tuần của bác sĩ này
+        $weeklySchedules = WorkSchedule::with('room')
+            ->where('doctor_profile_id', $schedule->doctor_profile_id)
+            ->where('is_active', true)
+            ->orderBy('start_time')
+            ->get()
+            ->groupBy('day_of_week');
+
+        // Tạo mảng slot giờ khám để hiển thị (tùy chọn)
+        $startMin = (int)date('H', strtotime($schedule->start_time)) * 60 + (int)date('i', strtotime($schedule->start_time));
+        $endMin = (int)date('H', strtotime($schedule->end_time)) * 60 + (int)date('i', strtotime($schedule->end_time));
+        $duration = $schedule->slot_duration_minutes;
+        $slotsCount = $duration > 0 ? floor(($endMin - $startMin) / $duration) : 0;
+
+        return view('admin.work-schedules.show', compact('schedule', 'upcomingAppointments', 'slotsCount', 'weeklySchedules'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $schedule = WorkSchedule::findOrFail($id);
+
+        $request->validate([
+            'doctor_profile_id' => 'required|exists:doctor_profiles,id',
+            'room_id' => 'required|exists:rooms,id',
+            'day_of_week' => 'required|integer|between:1,7',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'required|date_format:H:i|after:start_time',
+            'slot_duration_minutes' => 'required|integer|min:5|max:120',
+            'max_slots' => 'required|integer|min:1|max:100',
+            'is_active' => 'boolean'
+        ]);
+
+        $exists = WorkSchedule::where('doctor_profile_id', $request->doctor_profile_id)
+            ->where('room_id', $request->room_id)
+            ->where('day_of_week', $request->day_of_week)
+            ->where('id', '!=', $id)
+            ->exists();
+
+        if ($exists) {
+            return back()->with('error', 'Bác sĩ này đã có lịch tại phòng này vào thứ đã chọn.');
+        }
+
+        $schedule->update([
+            'doctor_profile_id' => $request->doctor_profile_id,
+            'room_id' => $request->room_id,
+            'day_of_week' => $request->day_of_week,
+            'start_time' => $request->start_time,
+            'end_time' => $request->end_time,
+            'slot_duration_minutes' => $request->slot_duration_minutes,
+            'max_slots' => $request->max_slots,
+            'is_active' => $request->has('is_active'),
+        ]);
+
+        SystemLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'WORK_SCHEDULE_UPDATED',
+            'module' => 'work_schedule',
+            'ref_type' => 'work_schedule',
+            'ref_id' => $schedule->id,
+            'description' => 'Cập nhật ca trực cho bác sĩ ID ' . $schedule->doctor_profile_id,
+            'ip_address' => request()->ip()
+        ]);
+
+        return back()->with('success', 'Đã cập nhật ca trực thành công.');
+    }
+
+    public function toggleActive($id)
+    {
+        $schedule = WorkSchedule::findOrFail($id);
+        $schedule->is_active = !$schedule->is_active;
+        $schedule->save();
+
+        return back()->with('success', 'Đã thay đổi trạng thái ca trực.');
+    }
+
+    public function destroy($id)
+    {
+        $schedule = WorkSchedule::findOrFail($id);
+
+        $hasActiveAppointments = \App\Models\Appointment::where('doctor_profile_id', $schedule->doctor_profile_id)
+            ->whereIn('status', ['pending', 'checked_in'])
+            ->whereRaw('DAYOFWEEK(appointment_date) = ?', [($schedule->day_of_week % 7) + 1])
+            ->where('appointment_date', '>=', now()->toDateString())
+            ->exists();
+
+        if ($hasActiveAppointments) {
+            session()->flash('warning', 'Ca trực đã được xoá nhưng bác sĩ này đang có lịch hẹn chờ khám vào thứ tương ứng. Hãy kiểm tra lại lịch hẹn.');
+        }
+
+        $schedule->delete();
+
+        SystemLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'WORK_SCHEDULE_DELETED',
+            'module' => 'work_schedule',
+            'ref_type' => 'work_schedule',
+            'ref_id' => $id,
+            'description' => 'Xoá ca trực',
+            'ip_address' => request()->ip()
+        ]);
+
+        return back()->with('success', 'Đã xoá ca trực thành công.');
+    }
+
+    public function storeOverride(Request $request)
+    {
+        $request->validate([
+            'doctor_profile_id' => 'required|exists:doctor_profiles,id',
+            'room_id' => 'nullable|exists:rooms,id',
+            'override_date' => 'required|date|after_or_equal:today',
+            'type' => 'required|in:close,extra',
+            'start_time' => 'required_if:type,extra|nullable|date_format:H:i',
+            'end_time' => 'required_if:type,extra|nullable|date_format:H:i|after:start_time',
+            'reason' => 'nullable|string|max:255'
+        ], [
+            'required_if' => 'Vui lòng nhập giờ nếu là thêm ca.'
+        ]);
+
+        $override = ScheduleOverride::create([
+            'doctor_profile_id' => $request->doctor_profile_id,
+            'room_id' => $request->room_id,
+            'override_date' => $request->override_date,
+            'type' => $request->type,
+            'start_time' => $request->start_time,
+            'end_time' => $request->end_time,
+            'reason' => $request->reason,
+            'created_by' => Auth::id(),
+        ]);
+
+        SystemLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'SCHEDULE_OVERRIDE_CREATED',
+            'module' => 'schedule_override',
+            'ref_type' => 'schedule_override',
+            'ref_id' => $override->id,
+            'description' => 'Thêm ngoại lệ lịch ' . $override->type,
+            'ip_address' => request()->ip()
+        ]);
+
+        return back()->with('success', 'Đã thêm ngoại lệ lịch thành công.');
+    }
+
+    public function destroyOverride($id)
+    {
+        $override = ScheduleOverride::findOrFail($id);
+        $override->delete();
+
+        return back()->with('success', 'Đã xoá ngoại lệ lịch thành công.');
+    }
+}
