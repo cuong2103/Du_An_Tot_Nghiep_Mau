@@ -42,9 +42,10 @@ Route::middleware(['auth', 'role:admin'])
             Route::get('/', [\App\Http\Controllers\Admin\DoctorController::class, 'index'])->name('index');
             Route::get('/create', [\App\Http\Controllers\Admin\DoctorController::class, 'create'])->name('create');
             Route::post('/', [\App\Http\Controllers\Admin\DoctorController::class, 'store'])->name('store');
+            Route::get('/{id}', [\App\Http\Controllers\Admin\DoctorController::class, 'show'])->name('show');
             Route::get('/{id}/edit', [\App\Http\Controllers\Admin\DoctorController::class, 'edit'])->name('edit');
             Route::put('/{id}', [\App\Http\Controllers\Admin\DoctorController::class, 'update'])->name('update');
-            Route::delete('/{id}', [\App\Http\Controllers\Admin\DoctorController::class, 'destroy'])->name('destroy');
+            Route::patch('/{id}/toggle-active', [\App\Http\Controllers\Admin\DoctorController::class, 'toggleActive'])->name('toggle-active');
         });
         
         // Chuyên khoa
