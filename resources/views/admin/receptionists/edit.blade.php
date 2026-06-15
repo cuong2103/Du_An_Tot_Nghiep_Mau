@@ -1,223 +1,228 @@
 <x-layouts.admin title="Chỉnh sửa lễ tân — {{ $receptionist->full_name }}">
-    <!-- Session Alerts -->
-    @if(session('success'))
-        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)" style="display: none;"
-             class="bg-green-50 text-green-800 p-4 rounded-lg mb-6 flex items-center justify-between border border-green-200">
-            <div class="flex items-center gap-3">
-                <i class="fa-solid fa-circle-check text-green-500"></i>
-                {{ session('success') }}
-            </div>
-            <button @click="show=false" class="text-green-500 hover:text-green-700"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-    @endif
-
-    <!-- Breadcrumbs & Header -->
-    <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-            <nav class="flex text-sm text-gray-500 mb-2">
-                <ol class="inline-flex items-center space-x-1 md:space-x-2">
-                    <li class="inline-flex items-center">
-                        <a href="{{ route('admin.dashboard') }}" class="hover:text-blue-600 transition-colors">Dashboard</a>
-                    </li>
-                    <li>
-                        <div class="flex items-center">
-                            <i class="fa-solid fa-chevron-right text-xs mx-2"></i>
-                            <a href="{{ route('admin.receptionists.index') }}" class="hover:text-blue-600 transition-colors">Lễ tân</a>
-                        </div>
-                    </li>
-                    <li>
-                        <div class="flex items-center">
-                            <i class="fa-solid fa-chevron-right text-xs mx-2"></i>
-                            <span class="text-gray-900 font-medium">Chỉnh sửa</span>
-                        </div>
-                    </li>
-                </ol>
+    <div class="space-y-6">
+        <!-- Header -->
+        <div class="flex items-center justify-between">
+            <nav class="flex text-sm text-gray-500 font-medium">
+                <a href="{{ route('admin.dashboard') }}" class="hover:text-gray-900 transition">Dashboard</a>
+                <span class="mx-2 text-gray-400">/</span>
+                <a href="{{ route('admin.receptionists.index') }}" class="hover:text-gray-900 transition">Lễ tân</a>
+                <span class="mx-2 text-gray-400">/</span>
+                <a href="{{ route('admin.receptionists.show', $receptionist->id) }}" class="hover:text-gray-900 transition">{{ $receptionist->full_name }}</a>
+                <span class="mx-2 text-gray-400">/</span>
+                <span class="text-gray-900">Chỉnh sửa</span>
             </nav>
-            <h2 class="text-2xl font-bold text-gray-900">Chỉnh sửa lễ tân — {{ $receptionist->full_name }}</h2>
-        </div>
-        <div>
-            <a href="{{ route('admin.receptionists.index') }}" class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+            <a href="{{ route('admin.receptionists.index') }}" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition flex items-center gap-2">
                 <i class="fa-solid fa-arrow-left"></i> Quay lại
             </a>
         </div>
-    </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Cột trái (2/3) Form -->
-        <div class="lg:col-span-2">
-            <form action="{{ route('admin.receptionists.update', $receptionist->id) }}" method="POST" x-data="{ loading: false }" @submit="loading = true" id="updateForm">
-                @csrf
-                @method('PUT')
-                
-                <div class="space-y-6">
-                    <!-- Thông tin đăng nhập -->
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
-                            <h3 class="text-lg font-bold text-gray-900"><i class="fa-solid fa-right-to-bracket text-blue-500 mr-2"></i> Thông tin đăng nhập</h3>
-                        </div>
-                        <div class="p-6 space-y-5">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Họ và tên đầy đủ <span class="text-red-500">*</span></label>
-                                <input type="text" name="full_name" value="{{ old('full_name', $receptionist->full_name) }}" required class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none">
-                                @error('full_name')
-                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Số điện thoại <span class="text-red-500">*</span></label>
-                                    <input type="text" name="phone" value="{{ old('phone', $receptionist->phone) }}" required placeholder="Dùng để đăng nhập" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none">
-                                    @error('phone')
-                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                    @enderror
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Tên đăng nhập (Username) <span class="text-red-500">*</span></label>
-                                    <input type="text" name="username" value="{{ old('username', $receptionist->username) }}" required class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none">
-                                    @error('username')
-                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                    @enderror
-                                </div>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                                <input type="email" name="email" value="{{ old('email', $receptionist->email) }}" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none">
-                                @error('email')
-                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-5" x-data="{ showPw: false }">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Mật khẩu mới</label>
-                                    <div class="relative">
-                                        <input :type="showPw ? 'text' : 'password'" name="password" minlength="8" placeholder="Để trống nếu không đổi mật khẩu" class="block w-full py-2 pl-3 pr-10 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none">
-                                        <button type="button" @click="showPw = !showPw" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
-                                            <i class="fa-solid" :class="showPw ? 'fa-eye-slash' : 'fa-eye'"></i>
-                                        </button>
-                                    </div>
-                                    @error('password')
-                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                    @enderror
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Xác nhận mật khẩu mới</label>
-                                    <input :type="showPw ? 'text' : 'password'" name="password_confirmation" minlength="8" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Thông tin nhân viên -->
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
-                            <h3 class="text-lg font-bold text-gray-900"><i class="fa-solid fa-address-card text-blue-500 mr-2"></i> Thông tin nhân viên</h3>
-                        </div>
-                        <div class="p-6 space-y-5">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Mã nhân viên <span class="text-red-500">*</span></label>
-                                    <input type="text" name="employee_code" value="{{ old('employee_code', $receptionist->staffProfile->employee_code ?? '') }}" required class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none uppercase">
-                                    @error('employee_code')
-                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                    @enderror
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Chức vụ <span class="text-red-500">*</span></label>
-                                    <input type="text" name="position" value="{{ old('position', $receptionist->staffProfile->position ?? '') }}" required class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none">
-                                    @error('position')
-                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                    @enderror
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Phòng ban</label>
-                                    <input type="text" name="department" value="{{ old('department', $receptionist->staffProfile->department ?? '') }}" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none">
-                                    @error('department')
-                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                    @enderror
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">SĐT nội bộ</label>
-                                    <input type="text" name="internal_phone" value="{{ old('internal_phone', $receptionist->staffProfile->internal_phone ?? '') }}" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none">
-                                    @error('internal_phone')
-                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                    @enderror
-                                </div>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Ngày vào làm</label>
-                                <input type="date" name="start_date" value="{{ old('start_date', $receptionist->staffProfile->start_date ? \Carbon\Carbon::parse($receptionist->staffProfile->start_date)->format('Y-m-d') : '') }}" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none">
-                                @error('start_date')
-                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </form>
+        <!-- Session Alerts -->
+        @if(session('success'))
+        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)" class="mb-4 flex items-center gap-3 p-4 bg-green-50 border border-green-200 text-green-800 rounded-lg">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>{{ session('success') }}</span>
+            <button @click="show=false" class="ml-auto"><i class="fa-solid fa-xmark"></i></button>
         </div>
+        @endif
+        @if(session('error'))
+        <div class="mb-4 flex items-center gap-3 p-4 bg-red-50 border border-red-200 text-red-800 rounded-lg">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <span>{{ session('error') }}</span>
+        </div>
+        @endif
 
-        <!-- Cột phải (1/3) Hiện trạng & Thao tác -->
-        <div class="space-y-6">
-            <!-- Thao tác bảo mật -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h3 class="text-base font-bold text-gray-900 mb-4"><i class="fa-solid fa-bolt text-yellow-500 mr-2"></i> Trạng thái hoạt động</h3>
-                
-                <div class="mb-5 flex items-center justify-between p-3 rounded-lg {{ $receptionist->is_active ? 'bg-green-50 border border-green-100' : 'bg-red-50 border border-red-100' }}">
-                    <span class="text-sm font-medium {{ $receptionist->is_active ? 'text-green-800' : 'text-red-800' }}">Tài khoản</span>
-                    @if($receptionist->is_active)
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Hoạt động</span>
-                    @else
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Đã khoá</span>
-                    @endif
-                </div>
-
-                <form action="{{ route('admin.receptionists.toggle-active', $receptionist->id) }}" method="POST">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Cột trái: Form (2/3) -->
+            <div class="lg:col-span-2">
+                <form action="{{ route('admin.receptionists.update', $receptionist->id) }}" method="POST" x-data="{ loading: false }" @submit="loading = true">
                     @csrf
-                    @method('PATCH')
-                    @if(auth()->id() == $receptionist->id)
-                        <button type="button" disabled class="w-full bg-gray-100 text-gray-400 cursor-not-allowed px-4 py-2.5 rounded-lg text-sm font-medium border border-gray-200 flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-lock"></i> Không thể khoá chính mình
-                        </button>
-                    @else
-                        @if($receptionist->is_active)
-                            <button type="submit" onclick="return confirm('Bạn có chắc muốn khoá tài khoản lễ tân này?')" class="w-full bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-lock"></i> Khoá tài khoản này
-                            </button>
-                        @else
-                            <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white shadow-sm border border-transparent px-4 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-lock-open"></i> Mở khoá tài khoản
-                            </button>
-                        @endif
-                    @endif
-                </form>
+                    @method('PUT')
+                    
+                    <div class="space-y-6">
+                        <!-- Thông tin đăng nhập -->
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+                            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                                <h3 class="font-semibold text-gray-800 flex items-center gap-2">
+                                    <i class="fa-solid fa-user-lock text-orange-500"></i> Thông tin đăng nhập
+                                </h3>
+                            </div>
+                            <div class="p-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="md:col-span-2">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Họ và tên đầy đủ <span class="text-red-500">*</span></label>
+                                        <input type="text" name="full_name" value="{{ old('full_name', $receptionist->full_name) }}" required
+                                               class="w-full border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 px-4 py-2 @error('full_name') border-red-500 @enderror">
+                                        @error('full_name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                    </div>
 
-                <div class="mt-6 pt-6 border-t border-gray-100">
-                    <div class="text-sm text-gray-500 mb-2 flex justify-between">
-                        <span>Ngày tạo:</span>
-                        <span class="font-medium text-gray-900">{{ $receptionist->created_at->format('d/m/Y H:i') }}</span>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Số điện thoại <span class="text-red-500">*</span></label>
+                                        <input type="text" name="phone" value="{{ old('phone', $receptionist->phone) }}" required
+                                               class="w-full border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 px-4 py-2 @error('phone') border-red-500 @enderror">
+                                        @error('phone') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Tên đăng nhập <span class="text-red-500">*</span></label>
+                                        <input type="text" name="username" value="{{ old('username', $receptionist->username) }}" required
+                                               class="w-full border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 px-4 py-2 @error('username') border-red-500 @enderror">
+                                        @error('username') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Số CCCD</label>
+                                        <input type="text" name="id_card" value="{{ old('id_card', $receptionist->id_card) }}"
+                                               class="w-full border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 px-4 py-2 @error('id_card') border-red-500 @enderror">
+                                        @error('id_card') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                        <input type="email" name="email" value="{{ old('email', $receptionist->email) }}"
+                                               class="w-full border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 px-4 py-2 @error('email') border-red-500 @enderror">
+                                        @error('email') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                    </div>
+
+                                    <div x-data="{ showPass: false }">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Mật khẩu mới</label>
+                                        <div class="relative">
+                                            <input :type="showPass ? 'text' : 'password'" name="password"
+                                                   class="w-full border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 px-4 py-2 pr-10 @error('password') border-red-500 @enderror"
+                                                   placeholder="Để trống nếu không đổi">
+                                            <button type="button" @click="showPass = !showPass" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
+                                                <i class="fa-solid" :class="showPass ? 'fa-eye-slash' : 'fa-eye'"></i>
+                                            </button>
+                                        </div>
+                                        @error('password') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                    </div>
+
+                                    <div x-data="{ showPass2: false }">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Xác nhận mật khẩu mới</label>
+                                        <div class="relative">
+                                            <input :type="showPass2 ? 'text' : 'password'" name="password_confirmation"
+                                                   class="w-full border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 px-4 py-2 pr-10"
+                                                   placeholder="Để trống nếu không đổi">
+                                            <button type="button" @click="showPass2 = !showPass2" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
+                                                <i class="fa-solid" :class="showPass2 ? 'fa-eye-slash' : 'fa-eye'"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Thông tin nhân viên -->
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+                            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                                <h3 class="font-semibold text-gray-800 flex items-center gap-2">
+                                    <i class="fa-solid fa-address-card text-orange-500"></i> Thông tin nhân viên
+                                </h3>
+                            </div>
+                            <div class="p-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Mã nhân viên <span class="text-red-500">*</span></label>
+                                        <input type="text" name="employee_code" value="{{ old('employee_code', $receptionist->staffProfile?->employee_code) }}" required
+                                               class="w-full border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 px-4 py-2 font-mono @error('employee_code') border-red-500 @enderror">
+                                        @error('employee_code') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Chức vụ <span class="text-red-500">*</span></label>
+                                        <input type="text" name="position" value="{{ old('position', $receptionist->staffProfile?->position) }}" required
+                                               class="w-full border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 px-4 py-2 @error('position') border-red-500 @enderror">
+                                        @error('position') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Phòng ban</label>
+                                        <input type="text" name="department" value="{{ old('department', $receptionist->staffProfile?->department) }}"
+                                               class="w-full border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 px-4 py-2 @error('department') border-red-500 @enderror">
+                                        @error('department') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">SĐT nội bộ</label>
+                                        <input type="text" name="internal_phone" value="{{ old('internal_phone', $receptionist->staffProfile?->internal_phone) }}"
+                                               class="w-full border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 px-4 py-2 @error('internal_phone') border-red-500 @enderror">
+                                        @error('internal_phone') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Ngày vào làm</label>
+                                        <input type="date" name="start_date" value="{{ old('start_date', $receptionist->staffProfile?->start_date?->format('Y-m-d')) }}" max="{{ date('Y-m-d') }}"
+                                               class="w-full border border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 px-4 py-2 @error('start_date') border-red-500 @enderror">
+                                        @error('start_date') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Footer Buttons -->
+                        <div class="flex items-center justify-end gap-3 pt-2">
+                            <a href="{{ route('admin.receptionists.index') }}" class="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition">
+                                Huỷ bỏ
+                            </a>
+                            <button type="submit" class="px-6 py-2.5 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed" :disabled="loading">
+                                <i class="fa-solid fa-spinner fa-spin" x-show="loading" style="display: none;"></i>
+                                <i class="fa-solid fa-save" x-show="!loading"></i>
+                                <span>Cập nhật</span>
+                            </button>
+                        </div>
                     </div>
-                    <div class="text-sm text-gray-500 flex justify-between">
-                        <span>Đăng nhập cuối:</span>
-                        <span class="font-medium text-gray-900">{{ $receptionist->last_login_at?->diffForHumans() ?? 'Chưa đăng nhập' }}</span>
-                    </div>
-                </div>
+                </form>
             </div>
 
-            <!-- Submit buttons -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-3">
-                <button type="submit" form="updateForm" class="w-full px-6 py-2.5 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-save"></i> Lưu cập nhật
-                </button>
-                <a href="{{ route('admin.receptionists.index') }}" class="w-full text-center px-6 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                    Huỷ bỏ
-                </a>
+            <!-- Cột phải: Thông tin hiện tại (1/3) -->
+            <div class="lg:col-span-1 space-y-6">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+                    <h3 class="font-semibold text-gray-800 mb-4 pb-2 border-b">Thông tin hiện tại</h3>
+                    
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-14 h-14 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-xl font-bold">
+                            {{ $receptionist->avatar_initials ?? mb_substr($receptionist->full_name, 0, 1) }}
+                        </div>
+                        <div>
+                            <p class="font-bold text-gray-900">{{ $receptionist->full_name }}</p>
+                            @if ($receptionist->is_active)
+                                <span class="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">
+                                    <i class="fa-solid fa-circle-check"></i> Đang hoạt động
+                                </span>
+                            @else
+                                <span class="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">
+                                    <i class="fa-solid fa-circle-xmark"></i> Đã khoá
+                                </span>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="space-y-3 pt-4 border-t border-gray-100 text-sm mb-6">
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Đăng nhập cuối:</span>
+                            <span class="font-medium text-gray-900">{{ $receptionist->last_login_at ? \Carbon\Carbon::parse($receptionist->last_login_at)->format('d/m/Y H:i') : 'Chưa đăng nhập' }}</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <form action="{{ route('admin.receptionists.toggle-active', $receptionist->id) }}" method="POST" onsubmit="return confirm('Bạn có chắc muốn {{ $receptionist->is_active ? 'khoá' : 'mở khoá' }} tài khoản lễ tân này?');">
+                            @csrf
+                            @method('PATCH')
+                            @if($receptionist->is_active)
+                                <button type="submit" class="w-full px-4 py-2 text-sm font-medium border border-red-200 text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-lock"></i> Khoá tài khoản
+                                </button>
+                            @else
+                                <button type="submit" class="w-full px-4 py-2 text-sm font-medium border border-green-200 text-green-600 bg-green-50 rounded-lg hover:bg-green-100 transition flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-lock-open"></i> Mở khoá tài khoản
+                                </button>
+                            @endif
+                        </form>
+
+                        <a href="{{ route('admin.receptionists.show', $receptionist->id) }}" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition text-sm font-medium mt-3">
+                            <i class="fa-solid fa-eye"></i> Xem hồ sơ chi tiết
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

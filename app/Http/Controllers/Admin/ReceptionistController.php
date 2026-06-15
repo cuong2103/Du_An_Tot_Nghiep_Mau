@@ -3,13 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\StaffProfile;
 use App\Models\SystemLog;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
 
 class ReceptionistController extends Controller
 {
@@ -31,6 +29,7 @@ class ReceptionistController extends Controller
                   ->orWhere('phone', 'like', '%'.$request->search.'%')
                   ->orWhereHas('staffProfile', fn($sq) =>
                       $sq->where('employee_code', 'like', '%'.$request->search.'%')
+                         ->orWhere('position', 'like', '%'.$request->search.'%')
                   );
             });
         }
@@ -47,7 +46,12 @@ class ReceptionistController extends Controller
 
         $receptionists = $query->paginate(15)->withQueryString();
 
-        return view('admin.receptionists.index', compact('receptionists', 'stats'));
+        // Lấy danh sách phòng ban distinct để filter
+        $departments = \App\Models\StaffProfile::whereNotNull('department')
+            ->distinct()
+            ->pluck('department');
+
+        return view('admin.receptionists.index', compact('receptionists', 'stats', 'departments'));
     }
 
     public function create()
@@ -57,55 +61,55 @@ class ReceptionistController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'full_name'       => 'required|string|max:100',
-            'phone'           => 'required|string|max:15|unique:users,phone',
-            'username'        => 'required|string|max:50|unique:users,username',
-            'email'           => 'nullable|email|max:150|unique:users,email',
-            'password'        => 'required|string|min:8|confirmed',
-            'employee_code'   => 'required|string|max:20|unique:staff_profiles,employee_code',
-            'position'        => 'required|string|max:100',
-            'department'      => 'nullable|string|max:150',
-            'internal_phone'  => 'nullable|string|max:15',
-            'start_date'      => 'nullable|date',
+        $validated = $request->validate([
+            'full_name'      => 'required|string|max:100',
+            'phone'          => 'required|string|max:15|unique:users,phone',
+            'username'       => 'required|string|max:50|unique:users,username',
+            'id_card'        => 'nullable|string|max:20|unique:users,id_card',
+            'email'          => 'nullable|email|max:150|unique:users,email',
+            'password'       => 'required|string|min:8|confirmed',
+            'employee_code'  => 'required|string|max:20|unique:staff_profiles,employee_code',
+            'position'       => 'required|string|max:100',
+            'department'     => 'nullable|string|max:150',
+            'internal_phone' => 'nullable|string|max:15',
+            'start_date'     => 'nullable|date|before_or_equal:today',
         ], [
-            'required' => 'Trường :attribute không được để trống.',
-            'unique'   => ':attribute đã tồn tại trong hệ thống.',
-            'max'      => ':attribute không được vượt quá :max ký tự.',
-            'min'      => ':attribute phải có ít nhất :min ký tự.',
-            'confirmed'=> 'Xác nhận mật khẩu không khớp.',
-            'email'    => 'Email không đúng định dạng.',
-        ], [
-            'full_name' => 'Họ và tên',
-            'phone' => 'Số điện thoại',
-            'username' => 'Tên đăng nhập',
-            'email' => 'Email',
-            'password' => 'Mật khẩu',
-            'employee_code' => 'Mã nhân viên',
-            'position' => 'Chức vụ',
-            'department' => 'Phòng ban',
-            'internal_phone' => 'SĐT nội bộ',
-            'start_date' => 'Ngày vào làm',
+            'full_name.required'     => 'Vui lòng nhập họ tên.',
+            'phone.required'         => 'Vui lòng nhập số điện thoại.',
+            'phone.unique'           => 'Số điện thoại đã được sử dụng.',
+            'username.required'      => 'Vui lòng nhập tên đăng nhập.',
+            'username.unique'        => 'Tên đăng nhập đã tồn tại.',
+            'id_card.unique'         => 'Số CCCD đã được sử dụng.',
+            'email.unique'           => 'Email đã được sử dụng.',
+            'password.required'      => 'Vui lòng nhập mật khẩu.',
+            'password.min'           => 'Mật khẩu tối thiểu 8 ký tự.',
+            'password.confirmed'     => 'Xác nhận mật khẩu không khớp.',
+            'employee_code.required' => 'Vui lòng nhập mã nhân viên.',
+            'employee_code.unique'   => 'Mã nhân viên đã tồn tại.',
+            'position.required'      => 'Vui lòng nhập chức vụ.',
+            'start_date.before_or_equal' => 'Ngày vào làm không được là ngày trong tương lai.',
         ]);
 
-        DB::transaction(function () use ($request) {
+        DB::transaction(function() use ($validated) {
             $user = User::create([
-                'full_name' => $request->full_name,
-                'phone'     => $request->phone,
-                'username'  => $request->username,
-                'email'     => $request->email,
-                'password'  => Hash::make($request->password),
-                'role'      => 'receptionist',
-                'is_active' => true,
+                'full_name'  => $validated['full_name'],
+                'phone'      => $validated['phone'],
+                'username'   => $validated['username'],
+                'id_card'    => $validated['id_card'] ?? null,
+                'email'      => $validated['email'] ?? null,
+                'password'   => bcrypt($validated['password']),
+                'role'       => 'receptionist',
+                'is_active'  => true,
             ]);
 
             StaffProfile::create([
                 'user_id'        => $user->id,
-                'employee_code'  => $request->employee_code,
-                'position'       => $request->position,
-                'department'     => $request->department,
-                'internal_phone' => $request->internal_phone,
-                'start_date'     => $request->start_date,
+                'employee_code'  => $validated['employee_code'],
+                'position'       => $validated['position'],
+                'department'     => $validated['department'] ?? null,
+                'internal_phone' => $validated['internal_phone'] ?? null,
+                'start_date'     => $validated['start_date'] ?? null,
+                'is_active'      => true,
             ]);
 
             SystemLog::create([
@@ -114,12 +118,37 @@ class ReceptionistController extends Controller
                 'module'      => 'receptionists',
                 'ref_type'    => 'users',
                 'ref_id'      => $user->id,
-                'description' => 'Thêm mới lễ tân: ' . $user->full_name,
+                'description' => 'Thêm lễ tân mới: ' . $validated['full_name'],
                 'ip_address'  => request()->ip(),
             ]);
         });
 
-        return redirect()->route('admin.receptionists.index')->with('success', 'Đã thêm lễ tân mới thành công.');
+        return redirect()->route('admin.receptionists.index')
+            ->with('success', 'Thêm lễ tân thành công.');
+    }
+
+    public function show($id)
+    {
+        $receptionist = User::with('staffProfile')
+            ->where('role', 'receptionist')
+            ->findOrFail($id);
+
+        // Thống kê check-in hôm nay và tháng này
+        $checkInStats = [
+            'today' => \App\Models\Appointment::where('measured_by', $id)
+                        ->whereDate('checked_in_at', today())->count(),
+            'month' => \App\Models\Appointment::where('measured_by', $id)
+                        ->whereMonth('checked_in_at', now()->month)
+                        ->whereYear('checked_in_at', now()->year)->count(),
+            'total' => \App\Models\Appointment::where('measured_by', $id)->count(),
+        ];
+
+        $logs = SystemLog::where('user_id', $id)
+            ->latest('created_at')
+            ->limit(10)
+            ->get();
+
+        return view('admin.receptionists.show', compact('receptionist', 'checkInStats', 'logs'));
     }
 
     public function edit($id)
@@ -127,68 +156,66 @@ class ReceptionistController extends Controller
         $receptionist = User::with('staffProfile')
             ->where('role', 'receptionist')
             ->findOrFail($id);
-            
         return view('admin.receptionists.edit', compact('receptionist'));
     }
 
     public function update(Request $request, $id)
     {
-        $receptionist = User::with('staffProfile')->where('role', 'receptionist')->findOrFail($id);
-        $staffProfileId = $receptionist->staffProfile->id ?? null;
+        $receptionist = User::with('staffProfile')
+            ->where('role', 'receptionist')
+            ->findOrFail($id);
 
-        $request->validate([
-            'full_name'       => 'required|string|max:100',
-            'phone'           => ["required", "string", "max:15", Rule::unique('users', 'phone')->ignore($id)],
-            'username'        => ["required", "string", "max:50", Rule::unique('users', 'username')->ignore($id)],
-            'email'           => ["nullable", "email", "max:150", Rule::unique('users', 'email')->ignore($id)],
-            'password'        => 'nullable|string|min:8|confirmed',
-            'employee_code'   => ["required", "string", "max:20", Rule::unique('staff_profiles', 'employee_code')->ignore($staffProfileId)],
-            'position'        => 'required|string|max:100',
-            'department'      => 'nullable|string|max:150',
-            'internal_phone'  => 'nullable|string|max:15',
-            'start_date'      => 'nullable|date',
+        $staffProfileId = $receptionist->staffProfile?->id;
+
+        $validated = $request->validate([
+            'full_name'      => 'required|string|max:100',
+            'phone'          => "required|string|max:15|unique:users,phone,$id",
+            'username'       => "required|string|max:50|unique:users,username,$id",
+            'id_card'        => "nullable|string|max:20|unique:users,id_card,$id",
+            'email'          => "nullable|email|max:150|unique:users,email,$id",
+            'password'       => 'nullable|string|min:8|confirmed',
+            'employee_code'  => "required|string|max:20|unique:staff_profiles,employee_code,$staffProfileId",
+            'position'       => 'required|string|max:100',
+            'department'     => 'nullable|string|max:150',
+            'internal_phone' => 'nullable|string|max:15',
+            'start_date'     => 'nullable|date|before_or_equal:today',
         ], [
-            'required' => 'Trường :attribute không được để trống.',
-            'unique'   => ':attribute đã tồn tại trong hệ thống.',
-            'max'      => ':attribute không được vượt quá :max ký tự.',
-            'min'      => ':attribute phải có ít nhất :min ký tự.',
-            'confirmed'=> 'Xác nhận mật khẩu không khớp.',
-            'email'    => 'Email không đúng định dạng.',
-        ], [
-            'full_name' => 'Họ và tên',
-            'phone' => 'Số điện thoại',
-            'username' => 'Tên đăng nhập',
-            'email' => 'Email',
-            'password' => 'Mật khẩu',
-            'employee_code' => 'Mã nhân viên',
-            'position' => 'Chức vụ',
-            'department' => 'Phòng ban',
-            'internal_phone' => 'SĐT nội bộ',
-            'start_date' => 'Ngày vào làm',
+            'full_name.required'     => 'Vui lòng nhập họ tên.',
+            'phone.required'         => 'Vui lòng nhập số điện thoại.',
+            'phone.unique'           => 'Số điện thoại đã được sử dụng.',
+            'username.required'      => 'Vui lòng nhập tên đăng nhập.',
+            'username.unique'        => 'Tên đăng nhập đã tồn tại.',
+            'id_card.unique'         => 'Số CCCD đã được sử dụng.',
+            'email.unique'           => 'Email đã được sử dụng.',
+            'password.min'           => 'Mật khẩu tối thiểu 8 ký tự.',
+            'password.confirmed'     => 'Xác nhận mật khẩu không khớp.',
+            'employee_code.required' => 'Vui lòng nhập mã nhân viên.',
+            'employee_code.unique'   => 'Mã nhân viên đã tồn tại.',
+            'position.required'      => 'Vui lòng nhập chức vụ.',
+            'start_date.before_or_equal' => 'Ngày vào làm không được là ngày trong tương lai.',
         ]);
 
-        DB::transaction(function () use ($request, $receptionist) {
+        DB::transaction(function() use ($receptionist, $validated) {
             $userData = [
-                'full_name' => $request->full_name,
-                'phone'     => $request->phone,
-                'username'  => $request->username,
-                'email'     => $request->email,
+                'full_name' => $validated['full_name'],
+                'phone'     => $validated['phone'],
+                'username'  => $validated['username'],
+                'id_card'   => $validated['id_card'] ?? null,
+                'email'     => $validated['email'] ?? null,
             ];
-
-            if ($request->filled('password')) {
-                $userData['password'] = Hash::make($request->password);
+            if (!empty($validated['password'])) {
+                $userData['password'] = bcrypt($validated['password']);
             }
-
             $receptionist->update($userData);
 
-            StaffProfile::updateOrCreate(
+            $receptionist->staffProfile()->updateOrCreate(
                 ['user_id' => $receptionist->id],
                 [
-                    'employee_code'  => $request->employee_code,
-                    'position'       => $request->position,
-                    'department'     => $request->department,
-                    'internal_phone' => $request->internal_phone,
-                    'start_date'     => $request->start_date,
+                    'employee_code'  => $validated['employee_code'],
+                    'position'       => $validated['position'],
+                    'department'     => $validated['department'] ?? null,
+                    'internal_phone' => $validated['internal_phone'] ?? null,
+                    'start_date'     => $validated['start_date'] ?? null,
                 ]
             );
 
@@ -198,20 +225,17 @@ class ReceptionistController extends Controller
                 'module'      => 'receptionists',
                 'ref_type'    => 'users',
                 'ref_id'      => $receptionist->id,
-                'description' => 'Cập nhật thông tin lễ tân: ' . $receptionist->full_name,
+                'description' => 'Cập nhật thông tin lễ tân: ' . $validated['full_name'],
                 'ip_address'  => request()->ip(),
             ]);
         });
 
-        return redirect()->route('admin.receptionists.edit', $receptionist->id)->with('success', 'Đã cập nhật thông tin lễ tân thành công.');
+        return redirect()->route('admin.receptionists.edit', $id)
+            ->with('success', 'Cập nhật thông tin lễ tân thành công.');
     }
 
     public function toggleActive($id)
     {
-        if ($id == auth()->id()) {
-            return redirect()->back()->with('error', 'Bạn không thể khoá tài khoản của chính mình.');
-        }
-
         $receptionist = User::where('role', 'receptionist')->findOrFail($id);
         $receptionist->update(['is_active' => !$receptionist->is_active]);
 
