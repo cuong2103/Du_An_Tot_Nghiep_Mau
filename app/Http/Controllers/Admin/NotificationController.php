@@ -9,6 +9,8 @@ use App\Models\User;
 use App\Models\SystemLog;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\SystemNotificationMail;
 
 class NotificationController extends Controller
 {
@@ -86,7 +88,7 @@ class NotificationController extends Controller
             ];
         }
 
-        DB::transaction(function () use ($notifications, $userIds) {
+        DB::transaction(function () use ($notifications, $userIds, $request) {
             // Batch insert in chunks to avoid query length limits
             foreach (array_chunk($notifications, 500) as $chunk) {
                 Notification::insert($chunk);
@@ -96,10 +98,19 @@ class NotificationController extends Controller
                 'user_id' => Auth::id(),
                 'action' => 'NOTIFICATION_SENT',
                 'module' => 'notifications',
-                'description' => 'Gửi thông báo đến ' . count($userIds) . ' người dùng',
+                'description' => 'Gửi thông báo đến ' . count($userIds) . ' người dùng qua kênh ' . $request->channel,
                 'ip_address' => request()->ip()
             ]);
         });
+
+        // Nếu gửi qua Email, kích hoạt Mailer
+        if ($request->channel === 'email') {
+            $users = User::whereIn('id', $userIds)->whereNotNull('email')->get();
+            foreach ($users as $user) {
+                // Sử dụng queue để gửi nếu hệ thống có worker, ở đây gửi thẳng queue/sync tùy config
+                Mail::to($user->email)->send(new SystemNotificationMail($request->title, $request->content));
+            }
+        }
 
         return redirect()->route('admin.notifications.index')->with('success', 'Đã gửi thông báo đến ' . count($userIds) . ' người dùng.');
     }
