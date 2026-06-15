@@ -5,6 +5,9 @@
             <p class="text-gray-500 mt-1">Danh sách lượt khám và đặt chỗ</p>
         </div>
         <div class="flex gap-2">
+            <a href="{{ route('admin.appointments.calendar') }}" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm">
+                <i class="fa-solid fa-calendar-days"></i> Dạng lịch
+            </a>
             <a href="{{ route('admin.appointments.export-csv') }}?{{ http_build_query(request()->query()) }}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm">
                 <i class="fa-solid fa-file-csv"></i> Xuất CSV
             </a>

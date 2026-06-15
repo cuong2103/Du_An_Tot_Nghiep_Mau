@@ -106,6 +106,47 @@ class AppointmentController extends Controller
         return view('admin.appointments.index', compact('appointments', 'doctors', 'specialties', 'totalCount', 'statusCounts'));
     }
 
+    public function calendar(Request $request)
+    {
+        $doctors = DoctorProfile::with('user')->whereHas('user', fn($q) => $q->where('is_active', true))->get();
+        $specialties = Specialty::where('is_active', true)->orderBy('name')->get();
+
+        // Get appointments for the calendar (usually current month)
+        $appointments = Appointment::with(['patientProfile', 'doctor.user'])
+            ->whereNotIn('status', ['cancelled'])
+            ->get();
+
+        // Format data for FullCalendar
+        $events = $appointments->map(function ($apt) {
+            $title = $apt->patientProfile->full_name . ' (' . ($apt->doctor->user->full_name ?? 'N/A') . ')';
+            $start = $apt->appointment_date->format('Y-m-d') . 'T' . $apt->appointment_time;
+            
+            // Generate a simple end time (assume 30 mins slot)
+            $end = \Carbon\Carbon::parse($start)->addMinutes(30)->format('Y-m-d\TH:i:s');
+
+            $color = match($apt->status) {
+                'pending'    => '#eab308', // yellow-500
+                'checked_in' => '#3b82f6', // blue-500
+                'examining'  => '#a855f7', // purple-500
+                'completed'  => '#22c55e', // green-500
+                'absent'     => '#6b7280', // gray-500
+                default      => '#9ca3af',
+            };
+
+            return [
+                'id'    => $apt->id,
+                'title' => $title,
+                'start' => $start,
+                'end'   => $end,
+                'url'   => route('admin.appointments.show', $apt->id),
+                'backgroundColor' => $color,
+                'borderColor' => $color,
+            ];
+        });
+
+        return view('admin.appointments.calendar', compact('doctors', 'specialties', 'events'));
+    }
+
     public function show($id)
     {
         $appointment = Appointment::with([

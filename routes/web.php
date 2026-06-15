@@ -95,6 +95,7 @@ Route::middleware(['auth', 'role:admin'])
         // Lịch hẹn
         Route::prefix('appointments')->name('appointments.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\AppointmentController::class, 'index'])->name('index');
+            Route::get('/calendar', [\App\Http\Controllers\Admin\AppointmentController::class, 'calendar'])->name('calendar');
             Route::get('/export-csv', [\App\Http\Controllers\Admin\AppointmentController::class, 'exportCsv'])->name('export-csv');
             Route::get('/create', [\App\Http\Controllers\Admin\AppointmentController::class, 'create'])->name('create');
             Route::post('/', [\App\Http\Controllers\Admin\AppointmentController::class, 'store'])->name('store');
