@@ -8,6 +8,7 @@ use App\Models\Specialty;
 use App\Models\SystemLog;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Storage;
 
 class SpecialtyController extends Controller
 {
@@ -28,18 +29,26 @@ class SpecialtyController extends Controller
             'description' => 'nullable|string',
             'display_order' => 'nullable|integer|min:0',
             'is_active' => 'boolean',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,svg|max:2048',
         ], [
             'name.required' => 'Vui lòng nhập tên chuyên khoa.',
             'name.unique' => 'Tên chuyên khoa đã tồn tại.',
             'display_order.min' => 'Thứ tự không hợp lệ.',
         ]);
 
-        $specialty = Specialty::create([
+        $data = [
             'name' => $request->name,
             'description' => $request->description,
             'display_order' => $request->display_order ?? 0,
             'is_active' => $request->has('is_active'),
-        ]);
+        ];
+
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('specialties', 'public');
+            $data['image_url'] = '/storage/' . $path;
+        }
+
+        $specialty = Specialty::create($data);
 
         SystemLog::create([
             'user_id' => Auth::id(),
@@ -63,18 +72,32 @@ class SpecialtyController extends Controller
             'description' => 'nullable|string',
             'display_order' => 'nullable|integer|min:0',
             'is_active' => 'boolean',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,svg|max:2048',
         ], [
             'name.required' => 'Vui lòng nhập tên chuyên khoa.',
             'name.unique' => 'Tên chuyên khoa đã tồn tại.',
             'display_order.min' => 'Thứ tự không hợp lệ.',
         ]);
 
-        $specialty->update([
+        $data = [
             'name' => $request->name,
             'description' => $request->description,
             'display_order' => $request->display_order ?? 0,
             'is_active' => $request->has('is_active'),
-        ]);
+        ];
+
+        if ($request->hasFile('image')) {
+            // Delete old image
+            if ($specialty->image_url) {
+                $oldPath = str_replace('/storage/', '', $specialty->image_url);
+                Storage::disk('public')->delete($oldPath);
+            }
+            
+            $path = $request->file('image')->store('specialties', 'public');
+            $data['image_url'] = '/storage/' . $path;
+        }
+
+        $specialty->update($data);
 
         SystemLog::create([
             'user_id' => Auth::id(),
@@ -138,10 +161,19 @@ class SpecialtyController extends Controller
         }
 
         $name = $specialty->name;
-        $specialty->delete(); // Automatically cascades to pivot tables if DB allows or Laravel handles it if configured. For pivot tables, let's detach manually to be safe.
+        $imageUrl = $specialty->image_url;
+
         // specialties has ManyToMany with rooms and doctor_profiles.
         $specialty->rooms()->detach();
         $specialty->doctors()->detach();
+
+        $specialty->delete(); // Now safe to delete the main record.
+
+        // Delete image file
+        if ($imageUrl) {
+            $oldPath = str_replace('/storage/', '', $imageUrl);
+            Storage::disk('public')->delete($oldPath);
+        }
 
         SystemLog::create([
             'user_id' => Auth::id(),
@@ -154,5 +186,12 @@ class SpecialtyController extends Controller
         ]);
 
         return back()->with('success', 'Đã xoá chuyên khoa thành công.');
+    }
+
+    public function show($id)
+    {
+        $specialty = Specialty::with(['doctors.user', 'rooms'])->findOrFail($id);
+        
+        return view('admin.specialties.show', compact('specialty'));
     }
 }
