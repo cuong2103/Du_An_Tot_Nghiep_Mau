@@ -156,6 +156,11 @@ Route::middleware(['auth', 'role:admin'])
         });
     });
 
+// API routes (normally in routes/api.php, placing here for convenience)
+Route::prefix('api')->name('api.')->group(function () {
+    Route::get('/doctors/{doctorId}/available-slots', [\App\Http\Controllers\Api\WorkScheduleController::class, 'getAvailableSlots'])->name('doctors.available-slots');
+});
+
 Route::get('/', function () {
     return redirect()->route('login');
 });
