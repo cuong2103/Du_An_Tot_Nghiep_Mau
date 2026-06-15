@@ -31,6 +31,12 @@ class FaqController extends Controller
         return view('admin.faqs.index', compact('faqs', 'specialties'));
     }
 
+    public function create()
+    {
+        $specialties = Specialty::where('is_active', true)->orderBy('name')->get();
+        return view('admin.faqs.create', compact('specialties'));
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -59,7 +65,14 @@ class FaqController extends Controller
             'ip_address' => request()->ip()
         ]);
 
-        return back()->with('success', 'Đã thêm FAQ thành công.');
+        return redirect()->route('admin.faqs.index')->with('success', 'Đã thêm FAQ thành công.');
+    }
+
+    public function edit($id)
+    {
+        $faq = Faq::findOrFail($id);
+        $specialties = Specialty::where('is_active', true)->orderBy('name')->get();
+        return view('admin.faqs.edit', compact('faq', 'specialties'));
     }
 
     public function update(Request $request, $id)
@@ -92,7 +105,7 @@ class FaqController extends Controller
             'ip_address' => request()->ip()
         ]);
 
-        return back()->with('success', 'Đã cập nhật FAQ thành công.');
+        return redirect()->route('admin.faqs.edit', $faq->id)->with('success', 'Đã cập nhật FAQ thành công.');
     }
 
     public function toggleActive($id)
