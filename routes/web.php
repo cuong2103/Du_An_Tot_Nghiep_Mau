@@ -144,6 +144,8 @@ Route::middleware(['auth', 'role:admin'])
             Route::put('/responses/{id}', [\App\Http\Controllers\Admin\ChatbotController::class, 'updateResponse'])->name('responses.update');
             Route::patch('/responses/{id}/toggle-active', [\App\Http\Controllers\Admin\ChatbotController::class, 'toggleResponseActive'])->name('responses.toggle-active');
             Route::delete('/responses/{id}', [\App\Http\Controllers\Admin\ChatbotController::class, 'destroyResponse'])->name('responses.destroy');
+
+            Route::post('/test', [\App\Http\Controllers\Admin\ChatbotController::class, 'testChat'])->name('test');
         });
 
         // Thông báo

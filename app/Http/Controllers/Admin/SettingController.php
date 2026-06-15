@@ -16,7 +16,7 @@ class SettingController extends Controller
         $settingsCollection = SystemSetting::all();
         $settings = [];
         foreach ($settingsCollection as $setting) {
-            $settings[$setting->setting_key] = $setting->setting_value;
+            $settings[$setting->key] = $setting->value;
         }
 
         return view('admin.settings.index', compact('settings'));
@@ -24,15 +24,20 @@ class SettingController extends Controller
 
     public function update(Request $request)
     {
-        $data = $request->except('_token', '_method');
         $userId = Auth::id();
+        $settingsData = $request->input('settings', []);
 
-        foreach ($data['settings'] as $key => $value) {
-            // value could be null if empty, convert to empty string if needed
+        // Xử lý upload Logo nếu có
+        if ($request->hasFile('logo')) {
+            $logoPath = $request->file('logo')->store('settings', 'public');
+            $settingsData['logo'] = $logoPath;
+        }
+
+        foreach ($settingsData as $key => $value) {
             SystemSetting::updateOrCreate(
-                ['setting_key' => $key],
+                ['key' => $key],
                 [
-                    'setting_value' => $value ?? '',
+                    'value' => $value ?? '',
                     'updated_by' => $userId
                 ]
             );

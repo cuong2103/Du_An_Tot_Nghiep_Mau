@@ -1,410 +1,378 @@
-<x-layouts.admin title="Quản lý Chatbot">
-    <div class="mb-6">
-        <h2 class="text-2xl font-bold text-gray-900">Quản lý Chatbot AI</h2>
-        <p class="text-gray-500 mt-1">Cấu hình Intent (Ý định) và Responses (Phản hồi) cho trợ lý ảo</p>
+<x-layouts.admin title="Cấu hình Chatbot">
+    <div class="mb-6 flex justify-between items-center">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-900">Trợ lý Ảo (Chatbot)</h2>
+            <p class="text-gray-500 mt-1">Đào tạo (Train) AI bằng cách định nghĩa các Ý định và Câu trả lời mẫu.</p>
+        </div>
+        <div class="flex items-center gap-4 text-sm">
+            <div class="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg border border-blue-100 flex items-center gap-2 font-medium">
+                <i class="fa-solid fa-comments"></i>
+                {{ number_format($totalSessions) }} Phiên Chat
+            </div>
+            <div class="bg-green-50 text-green-700 px-4 py-2 rounded-lg border border-green-100 flex items-center gap-2 font-medium">
+                <i class="fa-solid fa-message"></i>
+                {{ number_format($totalMessages) }} Tin nhắn
+            </div>
+        </div>
     </div>
 
-    <!-- Alert -->
     @if(session('success'))
-        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)" style="display: none;"
-             class="bg-green-50 text-green-800 p-4 rounded-lg mb-6 flex items-center justify-between border border-green-200">
-            <div class="flex items-center gap-3">
-                <i class="fa-solid fa-circle-check text-green-500"></i>
-                {{ session('success') }}
-            </div>
-            <button @click="show=false" class="text-green-500 hover:text-green-700"><i class="fa-solid fa-xmark"></i></button>
+        <div class="mb-6 bg-green-50 text-green-800 rounded-lg p-4 flex items-center border border-green-200">
+            <i class="fa-solid fa-circle-check text-green-500 mr-3 text-lg"></i>
+            <span class="flex-1 text-sm font-medium">{{ session('success') }}</span>
         </div>
     @endif
     @if(session('error'))
-        <div class="bg-red-50 text-red-800 p-4 rounded-lg mb-6 flex items-center gap-3 border border-red-200">
-            <i class="fa-solid fa-circle-exclamation text-red-500"></i>
-            {{ session('error') }}
-        </div>
-    @endif
-    @if($errors->any())
-        <div class="bg-red-50 text-red-800 p-4 rounded-lg mb-6 border border-red-200">
-            <ul class="list-disc list-inside text-sm">
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
+        <div class="mb-6 bg-red-50 text-red-800 rounded-lg p-4 flex items-center border border-red-200">
+            <i class="fa-solid fa-circle-exclamation text-red-500 mr-3 text-lg"></i>
+            <span class="flex-1 text-sm font-medium">{{ session('error') }}</span>
         </div>
     @endif
 
-    <!-- Stat Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex items-center">
-            <div class="h-12 w-12 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-xl mr-4 shrink-0">
-                <i class="fa-solid fa-comments"></i>
-            </div>
-            <div>
-                <p class="text-sm font-medium text-gray-500">Tổng phiên chat</p>
-                <p class="text-2xl font-bold text-gray-900">{{ number_format($totalSessions) }}</p>
-            </div>
-        </div>
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex items-center">
-            <div class="h-12 w-12 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center text-xl mr-4 shrink-0">
-                <i class="fa-solid fa-message"></i>
-            </div>
-            <div>
-                <p class="text-sm font-medium text-gray-500">Tổng tin nhắn</p>
-                <p class="text-2xl font-bold text-gray-900">{{ number_format($totalMessages) }}</p>
-            </div>
-        </div>
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex items-center">
-            <div class="h-12 w-12 rounded-lg bg-green-100 text-green-600 flex items-center justify-center text-xl mr-4 shrink-0">
-                <i class="fa-solid fa-calendar-day"></i>
-            </div>
-            <div>
-                <p class="text-sm font-medium text-gray-500">Phiên chat hôm nay</p>
-                <p class="text-2xl font-bold text-gray-900">{{ number_format($sessionsToday) }}</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Layout: 2 Cột -->
     <div x-data="{ 
-        intentModal: false,
-        responseModal: false,
-        intentEditing: false,
-        responseEditing: false,
-        intentFormAction: '{{ route('admin.chatbot.intents.store') }}',
-        responseFormAction: '{{ route('admin.chatbot.responses.store') }}',
-        intentData: { id: null, name: '', description: '', examples: '', action: 'faq_lookup', is_active: true },
-        responseData: { id: null, intent_id: '{{ request('intent_id', '') }}', content: '', priority: 1, is_active: true },
-
-        openIntent(intent = null) {
-            this.intentEditing = !!intent;
-            if(intent) {
-                this.intentFormAction = `/admin/chatbot/intents/${intent.id}`;
-                this.intentData.id = intent.id;
-                this.intentData.name = intent.intent_name;
-                this.intentData.description = intent.description;
-                this.intentData.examples = intent.example_phrases || '';
-                this.intentData.action = intent.action;
-                this.intentData.is_active = intent.is_active == 1;
-            } else {
-                this.intentFormAction = '{{ route('admin.chatbot.intents.store') }}';
-                this.intentData = { id: null, name: '', description: '', examples: '', action: 'faq_lookup', is_active: true };
-            }
-            this.intentModal = true;
-        },
-        
-        openResponse(response = null) {
-            this.responseEditing = !!response;
-            if(response) {
-                this.responseFormAction = `/admin/chatbot/responses/${response.id}`;
-                this.responseData.id = response.id;
-                this.responseData.intent_id = response.intent_id;
-                this.responseData.content = response.content;
-                this.responseData.priority = response.priority;
-                this.responseData.is_active = response.is_active == 1;
-            } else {
-                this.responseFormAction = '{{ route('admin.chatbot.responses.store') }}';
-                this.responseData = { id: null, intent_id: '{{ request('intent_id', '') }}', content: '', priority: 1, is_active: true };
-            }
-            this.responseModal = true;
-        }
-    }">
-
-        <div class="flex flex-col xl:flex-row gap-6">
+            activeTab: 'intents',
+            showIntentModal: false,
+            showResponseModal: false,
+            editIntent: null,
+            editResponse: null,
             
-            <!-- CỘT TRÁI: INTENTS -->
-            <div class="w-full xl:w-1/2">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <i class="fa-solid fa-brain text-blue-500"></i>
-                            <h3 class="text-base font-bold text-gray-900">Intents (Ý định)</h3>
-                        </div>
-                        <button type="button" @click="openIntent()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 shadow-sm">
-                            <i class="fa-solid fa-plus"></i> Thêm Intent
-                        </button>
-                    </div>
+            // Test Chatbot State
+            chatMessages: [],
+            chatInput: '',
+            isTyping: false,
+            
+            async sendTestMessage() {
+                if(!this.chatInput.trim() || this.isTyping) return;
+                
+                const userText = this.chatInput;
+                this.chatMessages.push({ role: 'user', text: userText });
+                this.chatInput = '';
+                this.isTyping = true;
+                
+                // Scroll to bottom
+                this.$nextTick(() => { this.$refs.chatBox.scrollTop = this.$refs.chatBox.scrollHeight; });
+
+                try {
+                    const res = await fetch('{{ route('admin.chatbot.test') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ message: userText })
+                    });
+                    const data = await res.json();
                     
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tên / Mô tả</th>
-                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hành động</th>
-                                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Responses</th>
-                                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
-                                    <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase w-24">Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                @forelse($intents as $intent)
-                                <tr class="hover:bg-gray-50 {{ request('intent_id') == $intent->id ? 'bg-blue-50/50' : '' }}">
+                    this.chatMessages.push({ role: 'bot', text: data.reply || data.error });
+                } catch(e) {
+                    this.chatMessages.push({ role: 'bot', text: 'Lỗi hệ thống: Không thể kết nối đến AI.' });
+                }
+                
+                this.isTyping = false;
+                this.$nextTick(() => { this.$refs.chatBox.scrollTop = this.$refs.chatBox.scrollHeight; });
+            }
+        }" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        
+        <!-- Tabs Navigation -->
+        <div class="flex border-b border-gray-100 overflow-x-auto hide-scrollbar bg-gray-50/50">
+            <button @click="activeTab = 'intents'" 
+                class="px-6 py-4 text-sm font-medium transition-colors border-b-2 whitespace-nowrap"
+                :class="activeTab === 'intents' ? 'border-blue-600 text-blue-600 bg-white' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100'">
+                <i class="fa-solid fa-brain mr-2"></i> 1. Danh sách Ý định (Intents)
+            </button>
+            <button @click="activeTab = 'responses'" 
+                class="px-6 py-4 text-sm font-medium transition-colors border-b-2 whitespace-nowrap"
+                :class="activeTab === 'responses' ? 'border-blue-600 text-blue-600 bg-white' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100'">
+                <i class="fa-solid fa-reply-all mr-2"></i> 2. Kịch bản Phản hồi
+            </button>
+            <button @click="activeTab = 'test'" 
+                class="px-6 py-4 text-sm font-medium transition-colors border-b-2 whitespace-nowrap"
+                :class="activeTab === 'test' ? 'border-purple-600 text-purple-600 bg-white' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100'">
+                <i class="fa-solid fa-robot mr-2 text-purple-500"></i> Test AI Chatbot
+            </button>
+        </div>
+
+        <!-- TAB 1: INTENTS -->
+        <div x-show="activeTab === 'intents'" style="display: none;">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-gray-800">Các Ý định (Intents) đã học</h3>
+                    <button @click="editIntent = null; showIntentModal = true" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                        <i class="fa-solid fa-plus mr-1"></i> Dạy Ý định mới
+                    </button>
+                </div>
+                
+                <div class="overflow-x-auto rounded-lg border border-gray-200">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th class="px-4 py-3">Ý định</th>
+                                <th class="px-4 py-3 w-1/3">Mẫu câu hỏi (Keywords)</th>
+                                <th class="px-4 py-3 text-center">Hành động AI</th>
+                                <th class="px-4 py-3 text-center">Trạng thái</th>
+                                <th class="px-4 py-3 text-right">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($intents as $intent)
+                                <tr class="border-b border-gray-100 hover:bg-gray-50">
                                     <td class="px-4 py-3">
-                                        <div class="text-sm font-bold font-mono text-gray-900">{{ $intent->intent_name }}</div>
-                                        <div class="text-xs text-gray-500 mt-0.5 truncate max-w-[150px]" title="{{ $intent->description }}">{{ $intent->description }}</div>
+                                        <div class="font-medium text-gray-900">{{ $intent->intent_name }}</div>
+                                        <div class="text-xs text-gray-500 mt-1">{{ $intent->description }}</div>
                                     </td>
-                                    <td class="px-4 py-3 whitespace-nowrap">
-                                        @php
-                                            $actionColors = [
-                                                'faq_lookup' => 'bg-blue-100 text-blue-800 border-blue-200',
-                                                'guide_booking' => 'bg-green-100 text-green-800 border-green-200',
-                                                'introduce_specialty' => 'bg-purple-100 text-purple-800 border-purple-200',
-                                                'transfer_staff' => 'bg-orange-100 text-orange-800 border-orange-200',
-                                            ];
-                                            $actionLabels = [
-                                                'faq_lookup' => 'Tra FAQ',
-                                                'guide_booking' => 'HD Đặt lịch',
-                                                'introduce_specialty' => 'GT Chuyên khoa',
-                                                'transfer_staff' => 'Chuyển nhân viên',
-                                            ];
-                                        @endphp
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium border {{ $actionColors[$intent->action] ?? 'bg-gray-100 text-gray-800' }}">
-                                            {{ $actionLabels[$intent->action] ?? $intent->action }}
-                                        </span>
+                                    <td class="px-4 py-3">
+                                        <p class="text-gray-600 line-clamp-2 text-xs bg-gray-100 p-2 rounded">{{ $intent->example_phrases ?: 'Chưa có mẫu' }}</p>
                                     </td>
                                     <td class="px-4 py-3 text-center">
-                                        <a href="{{ route('admin.chatbot.index', ['intent_id' => $intent->id]) }}" class="inline-flex items-center justify-center w-6 h-6 rounded-full {{ $intent->responses_count > 0 ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' : 'bg-gray-100 text-gray-500' }} text-xs font-bold transition-colors">
-                                            {{ $intent->responses_count }}
-                                        </a>
+                                        @if($intent->action === 'faq_lookup')
+                                            <span class="bg-blue-100 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded">Tra cứu FAQ</span>
+                                        @elseif($intent->action === 'guide_booking')
+                                            <span class="bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-1 rounded">Hướng dẫn đặt lịch</span>
+                                        @elseif($intent->action === 'transfer_staff')
+                                            <span class="bg-red-100 text-red-700 text-xs font-semibold px-2.5 py-1 rounded">Gặp nhân viên</span>
+                                        @else
+                                            <span class="bg-gray-100 text-gray-700 text-xs font-semibold px-2.5 py-1 rounded">{{ $intent->action }}</span>
+                                        @endif
                                     </td>
-                                    <td class="px-4 py-3 text-center whitespace-nowrap">
+                                    <td class="px-4 py-3 text-center">
                                         <form action="{{ route('admin.chatbot.intents.toggle-active', $intent->id) }}" method="POST">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit" class="text-gray-500 hover:text-gray-800" title="{{ $intent->is_active ? 'Đang bật' : 'Đang tắt' }}">
-                                                <i class="fa-solid {{ $intent->is_active ? 'fa-toggle-on text-green-500' : 'fa-toggle-off text-gray-400' }} text-lg"></i>
+                                            @csrf @method('PATCH')
+                                            <button type="submit" class="relative inline-flex items-center h-5 rounded-full w-9 focus:outline-none {{ $intent->is_active ? 'bg-green-500' : 'bg-gray-300' }}">
+                                                <span class="inline-block w-3.5 h-3.5 transform bg-white rounded-full transition {{ $intent->is_active ? 'translate-x-4.5' : 'translate-x-1' }}"></span>
                                             </button>
                                         </form>
                                     </td>
-                                    <td class="px-4 py-3 text-right whitespace-nowrap">
-                                        <button type="button" @click="openIntent({{ json_encode($intent) }})" class="text-blue-600 hover:text-blue-900 transition-colors p-1 mr-1">
-                                            <i class="fa-solid fa-pen"></i>
-                                        </button>
-                                        <form action="{{ route('admin.chatbot.intents.destroy', $intent->id) }}" method="POST" class="inline-block">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" 
-                                                onclick="return confirm('Bạn có chắc muốn xoá Intent này?')"
-                                                class="{{ $intent->responses_count > 0 ? 'text-gray-300 cursor-not-allowed' : 'text-red-600 hover:text-red-900' }} p-1 transition-colors"
-                                                {{ $intent->responses_count > 0 ? 'disabled title=Phải_xoá_hết_response_trước' : 'title=Xoá' }}>
-                                                <i class="fa-solid fa-trash"></i>
+                                    <td class="px-4 py-3 text-right">
+                                        <div class="flex items-center justify-end gap-2">
+                                            <button @click="editIntent = {{ json_encode($intent) }}; showIntentModal = true" class="text-blue-600 hover:text-blue-900 p-1">
+                                                <i class="fa-solid fa-pen-to-square"></i>
                                             </button>
-                                        </form>
+                                            <form action="{{ route('admin.chatbot.intents.destroy', $intent->id) }}" method="POST" onsubmit="return confirm('Xoá ý định này?');">
+                                                @csrf @method('DELETE')
+                                                <button type="submit" class="text-red-600 hover:text-red-900 p-1"><i class="fa-solid fa-trash-can"></i></button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="5" class="px-4 py-8 text-center text-gray-500 text-sm">Chưa có Intent nào.</td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
+                            @endforeach
+                            @if($intents->isEmpty())
+                                <tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">Chưa có Ý định nào được cấu hình.</td></tr>
+                            @endif
+                        </tbody>
+                    </table>
                 </div>
             </div>
+        </div>
 
-            <!-- CỘT PHẢI: RESPONSES -->
-            <div class="w-full xl:w-1/2">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <i class="fa-regular fa-comment-dots text-green-500"></i>
-                            <h3 class="text-base font-bold text-gray-900">Responses (Phản hồi)</h3>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            @if(request('intent_id'))
-                                @php $filteredIntent = $intents->firstWhere('id', request('intent_id')); @endphp
-                                <span class="text-xs text-gray-500 hidden sm:inline-block">Lọc theo: <span class="font-bold text-gray-900">{{ $filteredIntent->intent_name ?? '' }}</span></span>
-                                <a href="{{ route('admin.chatbot.index') }}" class="text-xs text-red-500 hover:text-red-700 font-medium">Bỏ lọc</a>
+        <!-- TAB 2: RESPONSES -->
+        <div x-show="activeTab === 'responses'" style="display: none;">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-gray-800">Kịch bản Phản hồi</h3>
+                    <button @click="editResponse = null; showResponseModal = true" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                        <i class="fa-solid fa-plus mr-1"></i> Thêm Phản hồi
+                    </button>
+                </div>
+                
+                <div class="overflow-x-auto rounded-lg border border-gray-200">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th class="px-4 py-3">Thuộc Ý định</th>
+                                <th class="px-4 py-3 w-1/2">Nội dung trả lời</th>
+                                <th class="px-4 py-3 text-center">Độ ưu tiên</th>
+                                <th class="px-4 py-3 text-center">Trạng thái</th>
+                                <th class="px-4 py-3 text-right">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($responses as $response)
+                                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                    <td class="px-4 py-3 font-medium text-gray-900">
+                                        {{ $response->intent->intent_name ?? 'N/A' }}
+                                    </td>
+                                    <td class="px-4 py-3 text-gray-600 whitespace-pre-wrap">{{ $response->content }}</td>
+                                    <td class="px-4 py-3 text-center font-bold text-blue-600">{{ $response->priority }}</td>
+                                    <td class="px-4 py-3 text-center">
+                                        <form action="{{ route('admin.chatbot.responses.toggle-active', $response->id) }}" method="POST">
+                                            @csrf @method('PATCH')
+                                            <button type="submit" class="relative inline-flex items-center h-5 rounded-full w-9 focus:outline-none {{ $response->is_active ? 'bg-green-500' : 'bg-gray-300' }}">
+                                                <span class="inline-block w-3.5 h-3.5 transform bg-white rounded-full transition {{ $response->is_active ? 'translate-x-4.5' : 'translate-x-1' }}"></span>
+                                            </button>
+                                        </form>
+                                    </td>
+                                    <td class="px-4 py-3 text-right">
+                                        <div class="flex items-center justify-end gap-2">
+                                            <button @click="editResponse = {{ json_encode($response) }}; showResponseModal = true" class="text-blue-600 hover:text-blue-900 p-1">
+                                                <i class="fa-solid fa-pen-to-square"></i>
+                                            </button>
+                                            <form action="{{ route('admin.chatbot.responses.destroy', $response->id) }}" method="POST" onsubmit="return confirm('Xoá câu trả lời này?');">
+                                                @csrf @method('DELETE')
+                                                <button type="submit" class="text-red-600 hover:text-red-900 p-1"><i class="fa-solid fa-trash-can"></i></button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                            @if($responses->isEmpty())
+                                <tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">Chưa có Câu trả lời nào được cấu hình.</td></tr>
                             @endif
-                            <button type="button" @click="openResponse()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 shadow-sm">
-                                <i class="fa-solid fa-plus"></i> Thêm Phản hồi
-                            </button>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-4">
+                    {{ $responses->links() }}
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: TEST CHATBOT -->
+        <div x-show="activeTab === 'test'" style="display: none;" class="bg-gray-50 p-6 min-h-[500px]">
+            <div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-[600px]">
+                <!-- Header -->
+                <div class="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 text-white flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                            <i class="fa-solid fa-robot text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold">Carebook AI Bot</h3>
+                            <p class="text-xs text-blue-100 flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-400"></span> Trực tuyến (Gemini 1.5)</p>
+                        </div>
+                    </div>
+                    <button @click="chatMessages = []" class="text-white/80 hover:text-white text-sm" title="Xóa lịch sử chat"><i class="fa-solid fa-rotate-right"></i> Làm mới</button>
+                </div>
+                
+                <!-- Chat Window -->
+                <div x-ref="chatBox" class="flex-1 p-4 overflow-y-auto bg-gray-50 space-y-4">
+                    <div class="text-center text-xs text-gray-400 mb-4">Môi trường giả lập (Sandbox)</div>
+                    
+                    <template x-for="(msg, i) in chatMessages" :key="i">
+                        <div class="flex gap-3" :class="msg.role === 'user' ? 'flex-row-reverse' : ''">
+                            <!-- Avatar -->
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" :class="msg.role === 'user' ? 'bg-blue-100 text-blue-600' : 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white'">
+                                <i class="fa-solid" :class="msg.role === 'user' ? 'fa-user' : 'fa-robot'"></i>
+                            </div>
+                            <!-- Bubble -->
+                            <div class="max-w-[75%] rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap"
+                                 :class="msg.role === 'user' ? 'bg-blue-600 text-white rounded-tr-sm' : 'bg-white border border-gray-200 text-gray-800 rounded-tl-sm'">
+                                <span x-text="msg.text"></span>
+                            </div>
+                        </div>
+                    </template>
+                    
+                    <!-- Typing Indicator -->
+                    <div x-show="isTyping" class="flex gap-3">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+                            <i class="fa-solid fa-robot"></i>
+                        </div>
+                        <div class="bg-white border border-gray-200 rounded-2xl rounded-tl-sm px-4 py-3 flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></span>
+                            <span class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></span>
+                            <span class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Input Area -->
+                <div class="p-3 bg-white border-t border-gray-200">
+                    <form @submit.prevent="sendTestMessage" class="flex gap-2 relative">
+                        <input x-model="chatInput" type="text" placeholder="Hỏi Chatbot..." class="flex-1 bg-gray-100 border-transparent focus:bg-white focus:ring-2 focus:ring-blue-500 rounded-full px-4 py-2.5 text-sm" :disabled="isTyping">
+                        <button type="submit" class="w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center transition-colors flex-shrink-0" :disabled="isTyping || !chatInput.trim()">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: INTENT -->
+        <div x-show="showIntentModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" style="display: none;">
+            <div @click.away="showIntentModal = false" class="bg-white rounded-xl shadow-lg w-full max-w-lg mx-4">
+                <div class="p-5 border-b border-gray-100 flex justify-between items-center">
+                    <h3 class="text-lg font-bold" x-text="editIntent ? 'Sửa Ý định' : 'Thêm Ý định mới'"></h3>
+                    <button @click="showIntentModal = false" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+                <form :action="editIntent ? `/admin/chatbot/intents/${editIntent.id}` : '{{ route('admin.chatbot.intents.store') }}'" method="POST" class="p-5">
+                    @csrf
+                    <template x-if="editIntent"><input type="hidden" name="_method" value="PUT"></template>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Mã Ý định (Intent Name) <span class="text-red-500">*</span></label>
+                            <input type="text" name="intent_name" :value="editIntent?.intent_name || ''" required class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="VD: hoi_gia_kham">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Mô tả <span class="text-red-500">*</span></label>
+                            <input type="text" name="description" :value="editIntent?.description || ''" required class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Hỏi chi phí dịch vụ...">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Các mẫu câu hỏi (Ngăn cách bởi dấu phẩy)</label>
+                            <textarea name="example_phrases" rows="3" class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Khám nhi bao nhiêu tiền?, Bảng giá khám..."><template x-if="editIntent" x-text="editIntent.example_phrases"></template></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Hành động AI <span class="text-red-500">*</span></label>
+                            <select name="action" class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500">
+                                <option value="faq_lookup" :selected="editIntent?.action === 'faq_lookup'">Tra cứu tự động (FAQ)</option>
+                                <option value="guide_booking" :selected="editIntent?.action === 'guide_booking'">Hướng dẫn đặt lịch</option>
+                                <option value="introduce_specialty" :selected="editIntent?.action === 'introduce_specialty'">Giới thiệu chuyên khoa</option>
+                                <option value="transfer_staff" :selected="editIntent?.action === 'transfer_staff'">Chuyển NV Hỗ trợ thật</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center mt-2">
+                            <input type="checkbox" name="is_active" id="intent_active" value="1" :checked="!editIntent || editIntent.is_active" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500">
+                            <label for="intent_active" class="ml-2 text-sm font-medium text-gray-900">Kích hoạt ngay</label>
                         </div>
                     </div>
                     
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Intent / Nội dung</th>
-                                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Ưu tiên</th>
-                                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Dùng</th>
-                                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
-                                    <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase w-24">Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                @forelse($responses as $resp)
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-4 py-3">
-                                        <div class="text-[10px] text-blue-600 font-mono mb-0.5">{{ $resp->intent->intent_name ?? '—' }}</div>
-                                        <div class="text-sm text-gray-900 line-clamp-2" title="{{ $resp->content }}">{{ Str::limit($resp->content, 100) }}</div>
-                                    </td>
-                                    <td class="px-4 py-3 text-center">
-                                        <span class="inline-flex items-center justify-center w-5 h-5 rounded bg-gray-100 text-gray-600 text-xs font-mono font-bold">{{ $resp->priority }}</span>
-                                    </td>
-                                    <td class="px-4 py-3 text-center text-xs font-medium text-gray-500">
-                                        {{ number_format($resp->use_count) }}
-                                    </td>
-                                    <td class="px-4 py-3 text-center whitespace-nowrap">
-                                        <form action="{{ route('admin.chatbot.responses.toggle-active', $resp->id) }}" method="POST">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit" class="text-gray-500 hover:text-gray-800" title="{{ $resp->is_active ? 'Đang bật' : 'Đang tắt' }}">
-                                                <i class="fa-solid {{ $resp->is_active ? 'fa-toggle-on text-green-500' : 'fa-toggle-off text-gray-400' }} text-lg"></i>
-                                            </button>
-                                        </form>
-                                    </td>
-                                    <td class="px-4 py-3 text-right whitespace-nowrap">
-                                        <button type="button" @click="openResponse({{ json_encode($resp) }})" class="text-blue-600 hover:text-blue-900 transition-colors p-1 mr-1">
-                                            <i class="fa-solid fa-pen"></i>
-                                        </button>
-                                        <form action="{{ route('admin.chatbot.responses.destroy', $resp->id) }}" method="POST" class="inline-block">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" 
-                                                onclick="return confirm('Bạn có chắc muốn xoá phản hồi này?')"
-                                                class="text-red-600 hover:text-red-900 p-1 transition-colors">
-                                                <i class="fa-solid fa-trash"></i>
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="5" class="px-4 py-8 text-center text-gray-500 text-sm">Chưa có Phản hồi nào.</td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button type="button" @click="showIntentModal = false" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Hủy</button>
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">Lưu Ý định</button>
                     </div>
-                    @if($responses->hasPages())
-                    <div class="px-4 py-3 border-t border-gray-100 bg-white">
-                        {{ $responses->links() }}
+                </form>
+            </div>
+        </div>
+
+        <!-- MODAL: RESPONSE -->
+        <div x-show="showResponseModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" style="display: none;">
+            <div @click.away="showResponseModal = false" class="bg-white rounded-xl shadow-lg w-full max-w-lg mx-4">
+                <div class="p-5 border-b border-gray-100 flex justify-between items-center">
+                    <h3 class="text-lg font-bold" x-text="editResponse ? 'Sửa Phản hồi' : 'Thêm Phản hồi mới'"></h3>
+                    <button @click="showResponseModal = false" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+                <form :action="editResponse ? `/admin/chatbot/responses/${editResponse.id}` : '{{ route('admin.chatbot.responses.store') }}'" method="POST" class="p-5">
+                    @csrf
+                    <template x-if="editResponse"><input type="hidden" name="_method" value="PUT"></template>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Thuộc Ý định <span class="text-red-500">*</span></label>
+                            <select name="intent_id" required class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500">
+                                @foreach($intents as $intent)
+                                    <option value="{{ $intent->id }}" :selected="editResponse?.intent_id == {{ $intent->id }}">{{ $intent->intent_name }} - {{ $intent->description }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nội dung trả lời <span class="text-red-500">*</span></label>
+                            <textarea name="content" required rows="5" class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Dạ, phòng khám Carebook có chi phí khám lâm sàng là..."><template x-if="editResponse" x-text="editResponse.content"></template></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Độ ưu tiên</label>
+                            <input type="number" name="priority" :value="editResponse?.priority || 1" min="1" max="10" class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div class="flex items-center mt-2">
+                            <input type="checkbox" name="is_active" id="response_active" value="1" :checked="!editResponse || editResponse.is_active" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500">
+                            <label for="response_active" class="ml-2 text-sm font-medium text-gray-900">Kích hoạt</label>
+                        </div>
                     </div>
-                    @endif
-                </div>
-            </div>
-
-        </div>
-
-        <!-- MODAL INTENT -->
-        <div x-show="intentModal" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                <div x-show="intentModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="intentModal = false"></div>
-                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-                <div x-show="intentModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
-                    <form :action="intentFormAction" method="POST">
-                        @csrf
-                        <template x-if="intentEditing">
-                            <input type="hidden" name="_method" value="PUT">
-                        </template>
-                        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 border-b border-gray-100">
-                            <div class="sm:flex sm:items-start">
-                                <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
-                                    <i class="fa-solid fa-brain text-blue-600"></i>
-                                </div>
-                                <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                                    <h3 class="text-lg leading-6 font-bold text-gray-900" id="modal-title" x-text="intentEditing ? 'Sửa Ý định (Intent)' : 'Thêm Ý định mới'"></h3>
-                                    <div class="mt-4 space-y-4 text-left">
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Tên Intent <span class="text-red-500">*</span></label>
-                                            <input type="text" name="intent_name" x-model="intentData.name" required placeholder="VD: ask_price, book_appointment" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none font-mono">
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Mô tả <span class="text-red-500">*</span></label>
-                                            <input type="text" name="description" x-model="intentData.description" required placeholder="VD: Hỏi về giá dịch vụ" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none">
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Hành động hệ thống <span class="text-red-500">*</span></label>
-                                            <select name="action" x-model="intentData.action" required class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
-                                                <option value="faq_lookup">Tra cứu FAQ thông thường</option>
-                                                <option value="guide_booking">Hướng dẫn đặt lịch khám</option>
-                                                <option value="introduce_specialty">Giới thiệu chuyên khoa</option>
-                                                <option value="transfer_staff">Chuyển cho nhân viên (Live chat)</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Các mẫu câu ví dụ (Example phrases)</label>
-                                            <textarea name="example_phrases" x-model="intentData.examples" rows="3" placeholder="Giá khám bao nhiêu?&#10;Khám tổng quát hết bao nhiêu tiền?" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none"></textarea>
-                                            <p class="text-[10px] text-gray-500 mt-1">Mỗi dòng một câu. Dùng để huấn luyện AI nhận diện tốt hơn.</p>
-                                        </div>
-                                        <div class="flex items-center mt-2">
-                                            <input type="checkbox" name="is_active" value="1" x-model="intentData.is_active" id="intent_active" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                                            <label for="intent_active" class="ml-2 block text-sm text-gray-900 cursor-pointer">Kích hoạt Intent này</label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                            <button type="submit" class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm transition-colors">
-                                Lưu Ý định
-                            </button>
-                            <button type="button" @click="intentModal = false" class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
-                                Huỷ bỏ
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                    
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button type="button" @click="showResponseModal = false" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Hủy</button>
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">Lưu Phản hồi</button>
+                    </div>
+                </form>
             </div>
         </div>
-
-        <!-- MODAL RESPONSE -->
-        <div x-show="responseModal" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                <div x-show="responseModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="responseModal = false"></div>
-                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-                <div x-show="responseModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
-                    <form :action="responseFormAction" method="POST">
-                        @csrf
-                        <template x-if="responseEditing">
-                            <input type="hidden" name="_method" value="PUT">
-                        </template>
-                        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 border-b border-gray-100">
-                            <div class="sm:flex sm:items-start">
-                                <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
-                                    <i class="fa-regular fa-comment-dots text-green-600"></i>
-                                </div>
-                                <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                                    <h3 class="text-lg leading-6 font-bold text-gray-900" id="modal-title" x-text="responseEditing ? 'Sửa Phản hồi (Response)' : 'Thêm Phản hồi mới'"></h3>
-                                    <div class="mt-4 space-y-4 text-left">
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Thuộc Intent <span class="text-red-500">*</span></label>
-                                            <select name="intent_id" x-model="responseData.intent_id" required class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white font-mono">
-                                                <option value="">-- Chọn Intent --</option>
-                                                @foreach($intents as $intent)
-                                                    <option value="{{ $intent->id }}">{{ $intent->intent_name }} ({{ $intent->description }})</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Nội dung phản hồi <span class="text-red-500">*</span></label>
-                                            <textarea name="content" x-model="responseData.content" required rows="4" placeholder="Nhập nội dung bot sẽ trả lời..." class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none"></textarea>
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Độ ưu tiên</label>
-                                            <input type="number" name="priority" x-model="responseData.priority" min="1" max="10" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none w-24">
-                                            <p class="text-[10px] text-gray-500 mt-1">1 là cao nhất. Dùng khi 1 Intent có nhiều câu trả lời ngẫu nhiên.</p>
-                                        </div>
-                                        <div class="flex items-center mt-2">
-                                            <input type="checkbox" name="is_active" value="1" x-model="responseData.is_active" id="response_active" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
-                                            <label for="response_active" class="ml-2 block text-sm text-gray-900 cursor-pointer">Sử dụng phản hồi này</label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                            <button type="submit" class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm transition-colors">
-                                Lưu Phản hồi
-                            </button>
-                            <button type="button" @click="responseModal = false" class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
-                                Huỷ bỏ
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
     </div>
 </x-layouts.admin>
