@@ -11,7 +11,7 @@
         <div class="flex-shrink-0">
             @if($specialty->image_url)
                 <div class="h-32 w-32 rounded-xl overflow-hidden border border-gray-100 bg-gray-50 flex items-center justify-center">
-                    <img src="{{ asset($specialty->image_url) }}" alt="{{ $specialty->name }}" class="h-full w-full object-cover">
+                    <img src="{{ asset('storage/' . $specialty->image_url) }}" alt="{{ $specialty->name }}" class="h-full w-full object-cover">
                 </div>
             @else
                 <div class="h-32 w-32 rounded-xl bg-blue-50 text-blue-500 flex flex-col items-center justify-center border border-blue-100">

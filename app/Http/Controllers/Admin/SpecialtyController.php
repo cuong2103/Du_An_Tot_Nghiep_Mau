@@ -29,7 +29,7 @@ class SpecialtyController extends Controller
             'description' => 'nullable|string',
             'display_order' => 'nullable|integer|min:0',
             'is_active' => 'boolean',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,svg|max:2048',
+            'image' => 'nullable|file|mimes:jpg,jpeg,png,svg|max:2048',
         ], [
             'name.required' => 'Vui lòng nhập tên chuyên khoa.',
             'name.unique' => 'Tên chuyên khoa đã tồn tại.',
@@ -43,9 +43,9 @@ class SpecialtyController extends Controller
             'is_active' => $request->has('is_active'),
         ];
 
-        if ($request->hasFile('image')) {
+        if ($request->hasFile('image') && $request->file('image')->isValid()) {
             $path = $request->file('image')->store('specialties', 'public');
-            $data['image_url'] = '/storage/' . $path;
+            $data['image_url'] = $path;
         }
 
         $specialty = Specialty::create($data);
@@ -72,7 +72,7 @@ class SpecialtyController extends Controller
             'description' => 'nullable|string',
             'display_order' => 'nullable|integer|min:0',
             'is_active' => 'boolean',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,svg|max:2048',
+            'image' => 'nullable|file|mimes:jpg,jpeg,png,svg|max:2048',
         ], [
             'name.required' => 'Vui lòng nhập tên chuyên khoa.',
             'name.unique' => 'Tên chuyên khoa đã tồn tại.',
@@ -86,15 +86,13 @@ class SpecialtyController extends Controller
             'is_active' => $request->has('is_active'),
         ];
 
-        if ($request->hasFile('image')) {
-            // Delete old image
+        if ($request->hasFile('image') && $request->file('image')->isValid()) {
             if ($specialty->image_url) {
-                $oldPath = str_replace('/storage/', '', $specialty->image_url);
-                Storage::disk('public')->delete($oldPath);
+                Storage::disk('public')->delete($specialty->image_url);
             }
             
             $path = $request->file('image')->store('specialties', 'public');
-            $data['image_url'] = '/storage/' . $path;
+            $data['image_url'] = $path;
         }
 
         $specialty->update($data);
@@ -171,8 +169,7 @@ class SpecialtyController extends Controller
 
         // Delete image file
         if ($imageUrl) {
-            $oldPath = str_replace('/storage/', '', $imageUrl);
-            Storage::disk('public')->delete($oldPath);
+            Storage::disk('public')->delete($imageUrl);
         }
 
         SystemLog::create([
