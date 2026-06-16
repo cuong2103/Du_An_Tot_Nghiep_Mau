@@ -78,52 +78,13 @@
                     </div>
                     
                     <div class="p-5" x-data="{ selectedDate: '{{ count($groupedSchedules) > 0 ? array_key_first($groupedSchedules) : '' }}', selectedSlot: null }">
-                        @if(count($groupedSchedules) > 0)
-                            <div class="mb-5">
-                                <label class="block text-sm font-bold text-gray-700 mb-2">Chọn ngày khám</label>
-                                <select x-model="selectedDate" @change="selectedSlot = null" class="w-full border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 shadow-sm text-sm">
-                                    @foreach($groupedSchedules as $date => $schedules)
-                                        <option value="{{ $date }}">{{ \Carbon\Carbon::parse($date)->translatedFormat('l, d/m/Y') }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="mb-6">
-                                <label class="block text-sm font-bold text-gray-700 mb-2">Khung giờ trống</label>
-                                
-                                @foreach($groupedSchedules as $date => $slots)
-                                    <div x-show="selectedDate === '{{ $date }}'" class="grid grid-cols-2 gap-3" style="display: none;">
-                                        @foreach($slots as $slot)
-                                            <button type="button"
-                                                @click="selectedSlot = '{{ $slot }}'"
-                                                class="py-2.5 px-3 rounded-xl border text-sm font-medium transition-all text-center"
-                                                :class="selectedSlot === '{{ $slot }}' ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white border-gray-200 text-gray-700 hover:border-blue-300 hover:bg-blue-50'">
-                                                {{ $slot }}
-                                            </button>
-                                        @endforeach
-                                    </div>
-                                @endforeach
-                            </div>
-
-                            <form action="{{ route('client.appointments.create') }}" method="GET">
-                                <input type="hidden" name="doctor_id" value="{{ $doctor->id }}">
-                                <input type="hidden" name="date" :value="selectedDate">
-                                <input type="hidden" name="time" :value="selectedSlot">
-                                <button type="submit" 
-                                    class="w-full py-3.5 rounded-xl text-white font-bold text-lg transition-all shadow-md flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    :class="selectedSlot ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400'"
-                                    :disabled="!selectedSlot">
-                                    Đặt Lịch Ngay <i class="fa-solid fa-arrow-right"></i>
-                                </button>
-                            </form>
-                            
-                            <p class="text-xs text-center text-gray-500 mt-4">Bạn sẽ đến phòng khám để thanh toán sau khi đặt lịch thành công.</p>
-                        @else
-                            <div class="text-center py-10">
-                                <i class="fa-regular fa-calendar-xmark text-4xl text-gray-300 mb-3"></i>
-                                <p class="text-gray-500 text-sm">Bác sĩ hiện chưa có lịch khám trống trong 14 ngày tới.</p>
-                            </div>
-                        @endif
+                        <div class="text-center py-6">
+                            <p class="text-gray-600 mb-6">Bạn muốn đặt lịch khám với {{ $doctor->full_title ?? $doctor->full_name }}?</p>
+                            <a href="{{ route('booking.index', ['doctor_id' => $doctor->id, 'specialty_id' => $doctor->doctorProfile->specialties->first()->id ?? null]) }}" 
+                               class="inline-block w-full py-3.5 rounded-xl text-white font-bold text-lg transition-all shadow-md bg-blue-600 hover:bg-blue-700">
+                                Đặt Lịch Ngay <i class="fa-solid fa-arrow-right ml-2"></i>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>

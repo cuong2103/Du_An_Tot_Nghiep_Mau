@@ -33,7 +33,7 @@
 
                     <!-- Call to action buttons -->
                     <div class="flex flex-wrap gap-4">
-                        <a href="#doctors-section" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl flex items-center gap-2">
+                        <a href="{{ route('booking.index') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl flex items-center gap-2">
                             <i class="fa-solid fa-calendar-plus text-lg"></i> Đặt Lịch Khám Ngay
                         </a>
                         <a href="#" class="bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 px-8 py-3.5 rounded-xl font-bold transition-all shadow-sm flex items-center gap-2">

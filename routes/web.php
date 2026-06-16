@@ -14,18 +14,25 @@ use App\Http\Controllers\Client\AccountController;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/bac-si/{id}', [DoctorController::class, 'show'])->name('client.doctors.show');
 
+// Public Booking Routes
+Route::get('/dat-lich', [\App\Http\Controllers\Patient\BookingController::class, 'index'])->name('booking.index');
+Route::get('/dat-lich/bac-si', [\App\Http\Controllers\Patient\BookingController::class, 'getDoctors'])->name('booking.doctors');
+Route::get('/dat-lich/slots', [\App\Http\Controllers\Patient\BookingController::class, 'getSlots'])->name('booking.slots');
+
 // Client Auth Routes
 Route::middleware(['auth'])->name('client.')->group(function () {
-    // Booking
-    Route::get('/dat-lich', [AppointmentController::class, 'create'])->name('appointments.create');
-    Route::post('/dat-lich', [AppointmentController::class, 'store'])->name('appointments.store');
-    Route::get('/dat-lich/thanh-cong/{id}', [AppointmentController::class, 'success'])->name('appointments.success');
     Route::get('/lich-kham', [AppointmentController::class, 'index'])->name('appointments.index');
     Route::patch('/lich-kham/{id}/huy', [AppointmentController::class, 'cancel'])->name('appointments.cancel');
 
     // Account & Profiles
     Route::get('/ho-so', [AccountController::class, 'index'])->name('account.index');
     Route::post('/ho-so', [AccountController::class, 'storeProfile'])->name('account.store-profile');
+});
+
+// Booking auth routes (no client prefix)
+Route::middleware(['auth'])->group(function () {
+    Route::post('/dat-lich', [\App\Http\Controllers\Patient\BookingController::class, 'store'])->name('booking.store');
+    Route::get('/dat-lich/thanh-cong/{code}', [\App\Http\Controllers\Patient\BookingController::class, 'success'])->name('booking.success');
 });
 
 // Guest only

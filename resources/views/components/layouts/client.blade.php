@@ -49,13 +49,13 @@
 
                 <!-- Auth / User Menu -->
                 <div class="hidden md:flex items-center space-x-4">
-                    <a href="#doctors-section" class="bg-blue-50 text-blue-700 hover:bg-blue-100 px-5 py-2.5 rounded-full text-sm font-bold transition-all shadow-sm flex items-center gap-2 border border-blue-200">
+                    <a href="{{ route('booking.index') }}" class="bg-blue-50 text-blue-700 hover:bg-blue-100 px-5 py-2.5 rounded-full text-sm font-bold transition-all shadow-sm flex items-center gap-2 border border-blue-200">
                         <i class="fa-regular fa-calendar-check"></i> Đặt lịch khám
                     </a>
                     
                     @guest
                         <a href="{{ route('login') }}" class="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">Đăng nhập</a>
-                        <a href="{{ route('register') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-full text-sm font-medium transition-all shadow-sm hover:shadow-md">Đăng ký</a>
+                        <a href="/dang-ky" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-full text-sm font-medium transition-all shadow-sm hover:shadow-md">Đăng ký</a>
                     @else
                         <div class="relative" x-data="{ open: false }">
                             <button @click="open = !open" @click.away="open = false" class="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-blue-600 focus:outline-none">
@@ -103,7 +103,7 @@
             @guest
                 <div class="pt-4 pb-3 border-t border-gray-100 px-5 flex gap-3">
                     <a href="{{ route('login') }}" class="flex-1 text-center bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-medium">Đăng nhập</a>
-                    <a href="{{ route('register') }}" class="flex-1 text-center bg-blue-600 text-white px-4 py-2 rounded-lg font-medium">Đăng ký</a>
+                    <a href="/dang-ky" class="flex-1 text-center bg-blue-600 text-white px-4 py-2 rounded-lg font-medium">Đăng ký</a>
                 </div>
             @else
                 <div class="pt-4 pb-3 border-t border-gray-100">
