@@ -9,6 +9,7 @@ use App\Models\PatientProfile;
 use App\Models\Appointment;
 use App\Models\SystemLog;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class PatientController extends Controller
 {
@@ -231,6 +232,12 @@ class PatientController extends Controller
             'email.unique'        => 'Email đã được sử dụng.',
             'date_of_birth.before'=> 'Ngày sinh không hợp lệ.',
         ]);
+
+        if (!empty($validated['password']) && Hash::check($validated['password'], $patient->password)) {
+            return redirect()->back()
+                ->withInput($request->except(['password', 'password_confirmation']))
+                ->withErrors(['password' => 'Mật khẩu mới phải khác mật khẩu cũ.']);
+        }
 
         DB::transaction(function() use ($patient, $validated) {
             $userData = [

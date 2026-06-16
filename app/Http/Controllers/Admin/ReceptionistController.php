@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\StaffProfile;
 use App\Models\SystemLog;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class ReceptionistController extends Controller
 {
@@ -194,6 +195,12 @@ class ReceptionistController extends Controller
             'position.required'      => 'Vui lòng nhập chức vụ.',
             'start_date.before_or_equal' => 'Ngày vào làm không được là ngày trong tương lai.',
         ]);
+
+        if (!empty($validated['password']) && Hash::check($validated['password'], $receptionist->password)) {
+            return redirect()->back()
+                ->withInput($request->except(['password', 'password_confirmation']))
+                ->withErrors(['password' => 'Mật khẩu mới phải khác mật khẩu cũ.']);
+        }
 
         DB::transaction(function() use ($receptionist, $validated) {
             $userData = [
