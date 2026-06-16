@@ -39,6 +39,12 @@ class PatientProfile extends Model
         return $this->belongsTo(User::class, 'owner_id');
     }
 
+    // Alias for owner() so eager loads using `user` work (e.g. ->with('patientProfile.user'))
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'owner_id');
+    }
+
     public function appointments()
     {
         return $this->hasMany(Appointment::class);
