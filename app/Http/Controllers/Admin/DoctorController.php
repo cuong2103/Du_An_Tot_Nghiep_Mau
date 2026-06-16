@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\SystemLog;
 use App\Models\Appointment;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class DoctorController extends Controller
 {
@@ -238,6 +239,12 @@ class DoctorController extends Controller
             'specialty_ids.required'  => 'Vui lòng chọn ít nhất một chuyên khoa.',
             'primary_specialty_id.required' => 'Vui lòng chọn chuyên khoa chính.',
         ]);
+
+        if (!empty($validated['password']) && Hash::check($validated['password'], $doctor->user->password)) {
+            return redirect()->back()
+                ->withInput($request->except(['password', 'password_confirmation']))
+                ->withErrors(['password' => 'Mật khẩu mới phải khác mật khẩu cũ.']);
+        }
 
         DB::transaction(function() use ($doctor, $validated) {
             // Update User
