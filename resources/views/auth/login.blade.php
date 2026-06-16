@@ -81,6 +81,9 @@
 
                 <form action="{{ route('login.post') }}" method="POST" class="space-y-6" x-data="{ loading: false }" @submit="loading = true">
                     @csrf
+                    @if(request()->has('redirect'))
+                        <input type="hidden" name="redirect" value="{{ request('redirect') }}">
+                    @endif
                     
                     <div>
                         <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>

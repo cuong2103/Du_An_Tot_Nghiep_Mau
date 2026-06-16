@@ -3,6 +3,37 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Client\HomeController;
+use App\Http\Controllers\Client\DoctorController;
+
+use App\Http\Controllers\Client\AppointmentController;
+
+use App\Http\Controllers\Client\AccountController;
+
+// Public Client Routes
+Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/bac-si/{id}', [DoctorController::class, 'show'])->name('client.doctors.show');
+
+// Public Booking Routes
+Route::get('/dat-lich', [\App\Http\Controllers\Patient\BookingController::class, 'index'])->name('booking.index');
+Route::get('/dat-lich/bac-si', [\App\Http\Controllers\Patient\BookingController::class, 'getDoctors'])->name('booking.doctors');
+Route::get('/dat-lich/slots', [\App\Http\Controllers\Patient\BookingController::class, 'getSlots'])->name('booking.slots');
+
+// Client Auth Routes
+Route::middleware(['auth'])->name('client.')->group(function () {
+    Route::get('/lich-kham', [AppointmentController::class, 'index'])->name('appointments.index');
+    Route::patch('/lich-kham/{id}/huy', [AppointmentController::class, 'cancel'])->name('appointments.cancel');
+
+    // Account & Profiles
+    Route::get('/ho-so', [AccountController::class, 'index'])->name('account.index');
+    Route::post('/ho-so', [AccountController::class, 'storeProfile'])->name('account.store-profile');
+});
+
+// Booking auth routes (no client prefix)
+Route::middleware(['auth'])->group(function () {
+    Route::post('/dat-lich', [\App\Http\Controllers\Patient\BookingController::class, 'store'])->name('booking.store');
+    Route::get('/dat-lich/thanh-cong/{code}', [\App\Http\Controllers\Patient\BookingController::class, 'success'])->name('booking.success');
+});
 
 // Guest only
 Route::middleware('guest')->group(function () {
@@ -34,6 +65,8 @@ Route::middleware(['auth', 'role:admin'])
             Route::get('/create', [\App\Http\Controllers\Admin\ReceptionistController::class, 'create'])->name('create');
             Route::post('/', [\App\Http\Controllers\Admin\ReceptionistController::class, 'store'])->name('store');
             Route::get('/{id}', [\App\Http\Controllers\Admin\ReceptionistController::class, 'show'])->name('show');
+            Route::get('/{id}/edit', [\App\Http\Controllers\Admin\ReceptionistController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [\App\Http\Controllers\Admin\ReceptionistController::class, 'update'])->name('update');
             Route::patch('/{id}/toggle-active', [\App\Http\Controllers\Admin\ReceptionistController::class, 'toggleActive'])->name('toggle-active');
         });
         
@@ -41,15 +74,27 @@ Route::middleware(['auth', 'role:admin'])
             Route::get('/', [\App\Http\Controllers\Admin\DoctorController::class, 'index'])->name('index');
             Route::get('/create', [\App\Http\Controllers\Admin\DoctorController::class, 'create'])->name('create');
             Route::post('/', [\App\Http\Controllers\Admin\DoctorController::class, 'store'])->name('store');
+            Route::get('/{id}', [\App\Http\Controllers\Admin\DoctorController::class, 'show'])->name('show');
             Route::get('/{id}/edit', [\App\Http\Controllers\Admin\DoctorController::class, 'edit'])->name('edit');
             Route::put('/{id}', [\App\Http\Controllers\Admin\DoctorController::class, 'update'])->name('update');
-            Route::delete('/{id}', [\App\Http\Controllers\Admin\DoctorController::class, 'destroy'])->name('destroy');
+            Route::patch('/{id}/toggle-active', [\App\Http\Controllers\Admin\DoctorController::class, 'toggleActive'])->name('toggle-active');
+        });
+        
+        Route::prefix('patients')->name('patients.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\PatientController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\Admin\PatientController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Admin\PatientController::class, 'store'])->name('store');
+            Route::get('/{id}', [\App\Http\Controllers\Admin\PatientController::class, 'show'])->name('show');
+            Route::get('/{id}/edit', [\App\Http\Controllers\Admin\PatientController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [\App\Http\Controllers\Admin\PatientController::class, 'update'])->name('update');
+            Route::patch('/{id}/toggle-active', [\App\Http\Controllers\Admin\PatientController::class, 'toggleActive'])->name('toggle-active');
         });
         
         // Chuyên khoa
         Route::prefix('specialties')->name('specialties.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\SpecialtyController::class, 'index'])->name('index');
             Route::post('/', [\App\Http\Controllers\Admin\SpecialtyController::class, 'store'])->name('store');
+            Route::get('/{id}', [\App\Http\Controllers\Admin\SpecialtyController::class, 'show'])->name('show');
             Route::put('/{id}', [\App\Http\Controllers\Admin\SpecialtyController::class, 'update'])->name('update');
             Route::patch('/{id}/toggle-active', [\App\Http\Controllers\Admin\SpecialtyController::class, 'toggleActive'])->name('toggle-active');
             Route::patch('/{id}/order', [\App\Http\Controllers\Admin\SpecialtyController::class, 'updateOrder'])->name('update-order');
@@ -59,7 +104,10 @@ Route::middleware(['auth', 'role:admin'])
         // Phòng khám
         Route::prefix('rooms')->name('rooms.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\RoomController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\Admin\RoomController::class, 'create'])->name('create');
             Route::post('/', [\App\Http\Controllers\Admin\RoomController::class, 'store'])->name('store');
+            Route::get('/{id}', [\App\Http\Controllers\Admin\RoomController::class, 'show'])->name('show');
+            Route::get('/{id}/edit', [\App\Http\Controllers\Admin\RoomController::class, 'edit'])->name('edit');
             Route::put('/{id}', [\App\Http\Controllers\Admin\RoomController::class, 'update'])->name('update');
             Route::patch('/{id}/toggle-active', [\App\Http\Controllers\Admin\RoomController::class, 'toggleActive'])->name('toggle-active');
             Route::delete('/{id}', [\App\Http\Controllers\Admin\RoomController::class, 'destroy'])->name('destroy');
@@ -82,6 +130,7 @@ Route::middleware(['auth', 'role:admin'])
         // Lịch hẹn
         Route::prefix('appointments')->name('appointments.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\AppointmentController::class, 'index'])->name('index');
+            Route::get('/calendar', [\App\Http\Controllers\Admin\AppointmentController::class, 'calendar'])->name('calendar');
             Route::get('/export-csv', [\App\Http\Controllers\Admin\AppointmentController::class, 'exportCsv'])->name('export-csv');
             Route::get('/create', [\App\Http\Controllers\Admin\AppointmentController::class, 'create'])->name('create');
             Route::post('/', [\App\Http\Controllers\Admin\AppointmentController::class, 'store'])->name('store');
@@ -106,7 +155,9 @@ Route::middleware(['auth', 'role:admin'])
         // FAQ
         Route::prefix('faqs')->name('faqs.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\FaqController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\Admin\FaqController::class, 'create'])->name('create');
             Route::post('/', [\App\Http\Controllers\Admin\FaqController::class, 'store'])->name('store');
+            Route::get('/{id}/edit', [\App\Http\Controllers\Admin\FaqController::class, 'edit'])->name('edit');
             Route::put('/{id}', [\App\Http\Controllers\Admin\FaqController::class, 'update'])->name('update');
             Route::patch('/{id}/toggle-active', [\App\Http\Controllers\Admin\FaqController::class, 'toggleActive'])->name('toggle-active');
             Route::delete('/{id}', [\App\Http\Controllers\Admin\FaqController::class, 'destroy'])->name('destroy');
@@ -124,6 +175,8 @@ Route::middleware(['auth', 'role:admin'])
             Route::put('/responses/{id}', [\App\Http\Controllers\Admin\ChatbotController::class, 'updateResponse'])->name('responses.update');
             Route::patch('/responses/{id}/toggle-active', [\App\Http\Controllers\Admin\ChatbotController::class, 'toggleResponseActive'])->name('responses.toggle-active');
             Route::delete('/responses/{id}', [\App\Http\Controllers\Admin\ChatbotController::class, 'destroyResponse'])->name('responses.destroy');
+
+            Route::post('/test', [\App\Http\Controllers\Admin\ChatbotController::class, 'testChat'])->name('test');
         });
 
         // Thông báo
@@ -142,6 +195,9 @@ Route::middleware(['auth', 'role:admin'])
         });
     });
 
-Route::get('/', function () {
-    return redirect()->route('login');
+// API routes (normally in routes/api.php, placing here for convenience)
+Route::prefix('api')->name('api.')->group(function () {
+    Route::get('/doctors/{doctorId}/available-slots', [\App\Http\Controllers\Api\WorkScheduleController::class, 'getAvailableSlots'])->name('doctors.available-slots');
 });
+
+

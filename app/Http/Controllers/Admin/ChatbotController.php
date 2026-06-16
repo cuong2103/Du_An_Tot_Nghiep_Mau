@@ -154,4 +154,61 @@ class ChatbotController extends Controller
 
         return back()->with('success', 'Đã xoá Phản hồi thành công.');
     }
+
+    public function testChat(Request $request)
+    {
+        $message = $request->input('message');
+        if (empty($message)) {
+            return response()->json(['error' => 'Message is required'], 400);
+        }
+
+        $apiKey = env('GEMINI_API_KEY');
+        if (empty($apiKey)) {
+            return response()->json(['reply' => 'Lỗi: Chưa cấu hình GEMINI_API_KEY trong file .env.']);
+        }
+
+        // Gather all active intents and responses to build context
+        $intents = ChatbotIntent::with(['responses' => function($q) {
+            $q->where('is_active', true)->orderBy('priority');
+        }])->where('is_active', true)->get();
+
+        $context = "Bạn là trợ lý ảo của phòng khám Carebook. Hãy trả lời dựa trên các dữ liệu sau:\n";
+        foreach ($intents as $intent) {
+            $context .= "Ý định: " . $intent->intent_name . " (Hành động: " . $intent->action . ")\n";
+            $context .= "Câu hỏi mẫu: " . $intent->example_phrases . "\n";
+            $context .= "Câu trả lời gợi ý: \n";
+            foreach ($intent->responses as $resp) {
+                $context .= "- " . $resp->content . "\n";
+            }
+            $context .= "\n";
+        }
+        $context .= "Nếu người dùng hỏi nằm ngoài phạm vi này, hãy nói rằng bạn không hiểu và khuyên họ liên hệ tổng đài.";
+
+        $client = new \GuzzleHttp\Client();
+        try {
+            $response = $client->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={$apiKey}", [
+                'json' => [
+                    'system_instruction' => [
+                        'parts' => [
+                            ['text' => $context]
+                        ]
+                    ],
+                    'contents' => [
+                        [
+                            'parts' => [
+                                ['text' => $message]
+                            ]
+                        ]
+                    ]
+                ]
+            ]);
+
+            $result = json_decode($response->getBody(), true);
+            $reply = $result['candidates'][0]['content']['parts'][0]['text'] ?? 'Xin lỗi, tôi không thể trả lời lúc này.';
+
+            return response()->json(['reply' => $reply]);
+        } catch (\Exception $e) {
+            return response()->json(['reply' => 'Lỗi kết nối AI: ' . $e->getMessage()]);
+        }
+    }
 }

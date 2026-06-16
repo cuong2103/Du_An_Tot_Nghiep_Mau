@@ -49,7 +49,7 @@ class PostController extends Controller
             'slug' => 'nullable|string|max:300|unique:posts,slug',
             'summary' => 'nullable|string',
             'content' => 'required|string',
-            'thumbnail_url' => 'nullable|url|max:500',
+            'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'specialty_id' => 'nullable|exists:specialties,id',
             'post_type' => 'required|in:news,service,guide,announcement',
             'is_published' => 'boolean',
@@ -62,13 +62,19 @@ class PostController extends Controller
             $slug = $originalSlug . '-' . $counter++;
         }
 
+        $thumbnailUrl = null;
+        if ($request->hasFile('thumbnail')) {
+            $path = $request->file('thumbnail')->store('posts', 'public');
+            $thumbnailUrl = '/storage/' . $path;
+        }
+
         $isPublished = $request->has('is_published');
         $post = Post::create([
             'title' => $request->title,
             'slug' => $slug,
             'summary' => $request->summary,
             'content' => $request->content,
-            'thumbnail_url' => $request->thumbnail_url,
+            'thumbnail_url' => $thumbnailUrl,
             'specialty_id' => $request->specialty_id,
             'post_type' => $request->post_type,
             'is_published' => $isPublished,
@@ -106,7 +112,7 @@ class PostController extends Controller
             'slug' => ['nullable', 'string', 'max:300', Rule::unique('posts')->ignore($post->id)],
             'summary' => 'nullable|string',
             'content' => 'required|string',
-            'thumbnail_url' => 'nullable|url|max:500',
+            'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'specialty_id' => 'nullable|exists:specialties,id',
             'post_type' => 'required|in:news,service,guide,announcement',
             'is_published' => 'boolean',
@@ -125,12 +131,22 @@ class PostController extends Controller
             $publishedAt = now();
         }
 
+        $thumbnailUrl = $post->thumbnail_url;
+        if ($request->hasFile('thumbnail')) {
+            if ($thumbnailUrl) {
+                $oldPath = str_replace('/storage/', '', $thumbnailUrl);
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+            }
+            $path = $request->file('thumbnail')->store('posts', 'public');
+            $thumbnailUrl = '/storage/' . $path;
+        }
+
         $post->update([
             'title' => $request->title,
             'slug' => $slug,
             'summary' => $request->summary,
             'content' => $request->content,
-            'thumbnail_url' => $request->thumbnail_url,
+            'thumbnail_url' => $thumbnailUrl,
             'specialty_id' => $request->specialty_id,
             'post_type' => $request->post_type,
             'is_published' => $isPublished,
@@ -167,6 +183,12 @@ class PostController extends Controller
     public function destroy($id)
     {
         $post = Post::findOrFail($id);
+        
+        if ($post->thumbnail_url) {
+            $oldPath = str_replace('/storage/', '', $post->thumbnail_url);
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+        }
+        
         $post->delete();
 
         SystemLog::create([

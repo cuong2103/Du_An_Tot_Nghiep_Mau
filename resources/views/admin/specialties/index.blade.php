@@ -48,10 +48,23 @@
 
                                 <!-- Tên -->
                                 <td class="px-6 py-4">
-                                    <div class="text-sm font-bold text-gray-900">{{ $specialty->name }}</div>
-                                    @if($specialty->description)
-                                        <div class="text-xs text-gray-500 mt-1 line-clamp-1" title="{{ $specialty->description }}">{{ $specialty->description }}</div>
-                                    @endif
+                                    <div class="flex items-center">
+                                        @if($specialty->image_url)
+                                            <div class="flex-shrink-0 h-10 w-10 mr-4 rounded-lg overflow-hidden border border-gray-100 bg-gray-50 flex items-center justify-center">
+                                                <img src="{{ asset($specialty->image_url) }}" alt="{{ $specialty->name }}" class="h-full w-full object-cover">
+                                            </div>
+                                        @else
+                                            <div class="flex-shrink-0 h-10 w-10 mr-4 rounded-lg bg-blue-50 text-blue-500 flex items-center justify-center border border-blue-100">
+                                                <i class="fa-solid fa-stethoscope text-xl"></i>
+                                            </div>
+                                        @endif
+                                        <div>
+                                            <a href="{{ route('admin.specialties.show', $specialty->id) }}" class="text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors">{{ $specialty->name }}</a>
+                                            @if($specialty->description)
+                                                <div class="text-xs text-gray-500 mt-1 line-clamp-1" title="{{ $specialty->description }}">{{ $specialty->description }}</div>
+                                            @endif
+                                        </div>
+                                    </div>
                                 </td>
 
                                 <!-- Số bác sĩ -->
@@ -154,11 +167,17 @@
                         display_order: specialty.display_order, 
                         is_active: specialty.is_active 
                     };
+                    if (this.$refs.imageInput) {
+                        this.$refs.imageInput.value = '';
+                    }
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 },
                 resetForm() {
                     this.mode = 'create';
                     this.form = { id: null, name: '', description: '', display_order: 0, is_active: true };
+                    if (this.$refs.imageInput) {
+                        this.$refs.imageInput.value = '';
+                    }
                 }
             }" @edit-specialty.window="fillForm($event.detail)">
                 
@@ -168,7 +187,7 @@
                         <button x-show="mode === 'edit'" @click="resetForm()" class="text-xs text-blue-600 hover:text-blue-800 font-medium">Thêm mới</button>
                     </div>
                     <div class="p-6">
-                        <form x-bind:action="mode === 'create' ? '{{ route('admin.specialties.store') }}' : '{{ url('admin/specialties') }}/' + form.id" method="POST">
+                        <form x-bind:action="mode === 'create' ? '{{ route('admin.specialties.store') }}' : '{{ url('admin/specialties') }}/' + form.id" method="POST" enctype="multipart/form-data">
                             @csrf
                             <template x-if="mode === 'edit'">
                                 <input type="hidden" name="_method" value="PUT">
@@ -180,6 +199,16 @@
                                     <input type="text" name="name" x-model="form.name" required
                                         class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none" placeholder="VD: Nội tim mạch">
                                     @error('name')
+                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Ảnh đại diện <span class="text-xs text-gray-400 font-normal">(Tùy chọn)</span></label>
+                                    <input type="file" name="image" x-ref="imageInput" accept="image/*"
+                                        class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                    <div class="text-[10px] text-gray-500 mt-1">Định dạng: JPG, PNG, SVG (Max 2MB). Ảnh mới sẽ ghi đè ảnh cũ nếu cập nhật.</div>
+                                    @error('image')
                                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                                     @enderror
                                 </div>

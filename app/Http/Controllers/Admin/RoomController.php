@@ -35,6 +35,12 @@ class RoomController extends Controller
         return view('admin.rooms.index', compact('rooms', 'specialties'));
     }
 
+    public function create()
+    {
+        $specialties = Specialty::where('is_active', true)->orderBy('name')->get();
+        return view('admin.rooms.create', compact('specialties'));
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -85,7 +91,14 @@ class RoomController extends Controller
             ]);
         });
 
-        return back()->with('success', 'Đã thêm phòng thành công.');
+        return redirect()->route('admin.rooms.index')->with('success', 'Đã thêm phòng thành công.');
+    }
+
+    public function edit($id)
+    {
+        $room = Room::with('specialties')->findOrFail($id);
+        $specialties = Specialty::where('is_active', true)->orderBy('name')->get();
+        return view('admin.rooms.edit', compact('room', 'specialties'));
     }
 
     public function update(Request $request, $id)
@@ -136,7 +149,7 @@ class RoomController extends Controller
             ]);
         });
 
-        return back()->with('success', 'Đã cập nhật phòng thành công.');
+        return redirect()->route('admin.rooms.index')->with('success', 'Đã cập nhật phòng thành công.');
     }
 
     public function toggleActive($id)
@@ -164,5 +177,21 @@ class RoomController extends Controller
         $room->delete();
 
         return back()->with('success', 'Đã xoá phòng thành công.');
+    }
+
+    public function show($id)
+    {
+        $room = Room::with([
+            'specialties',
+            'workSchedules.doctor.user'
+        ])->findOrFail($id);
+
+        $todayAppointments = $room->appointments()
+            ->with(['patientProfile', 'doctorProfile.user'])
+            ->whereDate('appointment_date', \Carbon\Carbon::today())
+            ->orderBy('appointment_time')
+            ->get();
+
+        return view('admin.rooms.show', compact('room', 'todayAppointments'));
     }
 }

@@ -27,15 +27,49 @@
                 <i class="fa-solid fa-house w-6 text-center mr-2 {{ request()->routeIs('admin.dashboard') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
                 Dashboard
             </a>
-            <a href="{{ route('admin.users.index') }}" class="{{ request()->routeIs('admin.users.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
-                <i class="fa-solid fa-hospital-user w-6 text-center mr-2 {{ request()->routeIs('admin.users.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i> Bệnh nhân
-            </a>
-            <a href="{{ route('admin.doctors.index') }}" class="{{ request()->routeIs('admin.doctors.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
-                <i class="fa-solid fa-user-doctor w-6 text-center mr-2 {{ request()->routeIs('admin.doctors.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i> Bác sĩ
-            </a>
-            <a href="{{ route('admin.receptionists.index') }}" class="{{ request()->routeIs('admin.receptionists.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
-                <i class="fa-solid fa-user-tie w-6 text-center mr-2 {{ request()->routeIs('admin.receptionists.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i> Lễ tân
-            </a>
+            <div x-data="{ openUsers: {{ request()->routeIs('admin.users.*', 'admin.doctors.*', 'admin.receptionists.*', 'admin.patients.*') ? 'true' : 'false' }} }">
+                <!-- Menu cha -->
+                <button @click="openUsers = !openUsers"
+                        class="w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium
+                               {{ request()->routeIs('admin.users.*', 'admin.doctors.*', 'admin.receptionists.*', 'admin.patients.*')
+                                  ? 'bg-blue-50 text-blue-600'
+                                  : 'text-gray-700 hover:bg-gray-100' }}">
+                    <span class="flex items-center">
+                        <i class="fa-solid fa-users w-6 text-center mr-2 {{ request()->routeIs('admin.users.*', 'admin.doctors.*', 'admin.receptionists.*', 'admin.patients.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i>
+                        Quản lý tài khoản
+                    </span>
+                    <i class="fa-solid fa-chevron-down text-xs transition-transform"
+                       :class="openUsers ? 'rotate-180' : ''"></i>
+                </button>
+
+                <!-- Sub-menu -->
+                <div x-show="openUsers" x-transition class="ml-2 mt-1 space-y-1">
+                    <a href="{{ route('admin.users.index') }}"
+                       class="flex items-center px-3 py-2 rounded-md text-sm
+                              {{ request()->routeIs('admin.users.*') ? 'bg-blue-50/50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-100' }}">
+                        <i class="fa-solid fa-list w-6 text-center mr-2"></i>
+                        Tất cả tài khoản
+                    </a>
+                    <a href="{{ route('admin.doctors.index') }}"
+                       class="flex items-center px-3 py-2 rounded-md text-sm
+                              {{ request()->routeIs('admin.doctors.*') ? 'bg-purple-50 text-purple-700 font-medium' : 'text-gray-600 hover:bg-gray-100' }}">
+                        <i class="fa-solid fa-user-doctor w-6 text-center mr-2"></i>
+                        Bác sĩ
+                    </a>
+                    <a href="{{ route('admin.receptionists.index') }}"
+                       class="flex items-center px-3 py-2 rounded-md text-sm
+                              {{ request()->routeIs('admin.receptionists.*') ? 'bg-orange-50 text-orange-700 font-medium' : 'text-gray-600 hover:bg-gray-100' }}">
+                        <i class="fa-solid fa-user-tie w-6 text-center mr-2"></i>
+                        Lễ tân
+                    </a>
+                    <a href="{{ Route::has('admin.patients.index') ? route('admin.patients.index') : '#' }}"
+                       class="flex items-center px-3 py-2 rounded-md text-sm
+                              {{ request()->routeIs('admin.patients.*') ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-600 hover:bg-gray-100' }}">
+                        <i class="fa-solid fa-user-injured w-6 text-center mr-2"></i>
+                        Bệnh nhân
+                    </a>
+                </div>
+            </div>
             <a href="{{ route('admin.specialties.index') }}" class="{{ request()->routeIs('admin.specialties.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
                 <i class="fa-solid fa-stethoscope w-6 text-center mr-2 {{ request()->routeIs('admin.specialties.*') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500' }}"></i> Chuyên khoa
             </a>

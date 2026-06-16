@@ -1,159 +1,198 @@
-<x-layouts.admin title="Thêm bài viết mới">
+<x-layouts.admin title="Viết bài mới">
     <div class="mb-6">
-        <div class="flex items-center text-sm text-gray-500 mb-2">
-            <a href="{{ route('admin.dashboard') }}" class="hover:text-blue-600 transition-colors">Dashboard</a>
-            <i class="fa-solid fa-chevron-right text-[10px] mx-2"></i>
-            <a href="{{ route('admin.posts.index') }}" class="hover:text-blue-600 transition-colors">Bài viết</a>
-            <i class="fa-solid fa-chevron-right text-[10px] mx-2"></i>
-            <span class="text-gray-800 font-medium">Thêm mới</span>
-        </div>
-        <h2 class="text-2xl font-bold text-gray-900">Thêm bài viết mới</h2>
+        <a href="{{ route('admin.posts.index') }}" class="text-sm font-medium text-gray-500 hover:text-blue-600 transition-colors mb-2 inline-block">
+            <i class="fa-solid fa-arrow-left mr-1"></i> Quay lại Danh sách Bài viết
+        </a>
+        <h2 class="text-2xl font-bold text-gray-900 mt-2">Viết bài mới</h2>
     </div>
 
-    <!-- Error Summary -->
-    @if($errors->any())
-        <div class="bg-red-50 text-red-800 p-4 rounded-lg mb-6 border border-red-200">
-            <div class="flex items-center gap-2 mb-2 font-bold">
-                <i class="fa-solid fa-circle-exclamation text-red-500"></i>
-                Có lỗi xảy ra, vui lòng kiểm tra lại:
-            </div>
-            <ul class="list-disc list-inside text-sm text-red-600 ml-6">
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
-    <form action="{{ route('admin.posts.store') }}" method="POST" x-data="{
-        title: '{{ old('title') }}',
-        slug: '{{ old('slug') }}',
-        thumbnailUrl: '{{ old('thumbnail_url') }}',
-        generateSlug() {
-            if(!this.slug && this.title) {
-                // Basic slugification for preview
-                let str = this.title.toLowerCase().trim();
-                str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, 'a');
-                str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, 'e');
-                str = str.replace(/ì|í|ị|ỉ|ĩ/g, 'i');
-                str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, 'o');
-                str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, 'u');
-                str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, 'y');
-                str = str.replace(/đ/g, 'd');
-                str = str.replace(/[^a-z0-9\-]+/g, '-');
-                str = str.replace(/\-+/g, '-');
-                return str;
-            }
-            return this.slug;
-        }
-    }">
+    <form action="{{ route('admin.posts.store') }}" method="POST" enctype="multipart/form-data" class="flex flex-col lg:flex-row gap-6">
         @csrf
         
-        <div class="flex flex-col lg:flex-row gap-6">
-            
-            <!-- Cột trái (2/3) -->
-            <div class="w-full lg:w-2/3 space-y-6">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <h3 class="text-lg font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">Nội dung bài viết</h3>
-                    
-                    <div class="space-y-5">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Tiêu đề bài viết <span class="text-red-500">*</span></label>
-                            <input type="text" name="title" x-model="title" required placeholder="Nhập tiêu đề..." class="block w-full py-2.5 px-4 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-base font-medium outline-none">
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Đường dẫn (Slug)</label>
-                            <input type="text" name="slug" x-model="slug" placeholder="Để trống để tự tạo từ tiêu đề" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none font-mono text-gray-600">
-                            <p class="text-xs text-gray-500 mt-1">
-                                URL xem trước: <span class="text-blue-600 font-mono">{{ url('/posts') }}/<span x-text="generateSlug() || '...' "></span></span>
-                            </p>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Tóm tắt ngắn gọn</label>
-                            <textarea name="summary" rows="3" placeholder="Đoạn mô tả ngắn hiển thị ở trang chủ và SEO..." class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none">{{ old('summary') }}</textarea>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Nội dung bài viết <span class="text-red-500">*</span></label>
-                            <div class="text-xs text-gray-500 mb-2 italic">* Bạn có thể sử dụng các thẻ HTML cơ bản (h2, p, strong, ul, li...) để trình bày văn bản.</div>
-                            <textarea name="content" rows="15" required class="block w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none font-mono">{{ old('content') }}</textarea>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Cột phải (1/3) -->
-            <div class="w-full lg:w-1/3 space-y-6">
-                
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <h3 class="text-base font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">Xuất bản</h3>
-                    
-                    <div class="space-y-4">
-                        <div class="flex items-center justify-between py-2 border-b border-gray-50">
-                            <label class="text-sm font-medium text-gray-700">Trạng thái đăng bài</label>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" name="is_published" value="1" {{ old('is_published') ? 'checked' : '' }} class="sr-only peer">
-                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
-                            </label>
-                        </div>
-                        <div class="text-xs text-gray-500 italic mt-[-8px]">Bật để xuất bản ngay, tắt để lưu nháp.</div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Loại bài viết <span class="text-red-500">*</span></label>
-                            <select name="post_type" required class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
-                                <option value="news" {{ old('post_type') === 'news' ? 'selected' : '' }}>Tin tức y tế</option>
-                                <option value="service" {{ old('post_type') === 'service' ? 'selected' : '' }}>Dịch vụ khám chữa bệnh</option>
-                                <option value="guide" {{ old('post_type') === 'guide' ? 'selected' : '' }}>Hướng dẫn quy trình</option>
-                                <option value="announcement" {{ old('post_type') === 'announcement' ? 'selected' : '' }}>Thông báo hệ thống</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Chuyên khoa liên quan</label>
-                            <select name="specialty_id" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
-                                <option value="">Không liên kết chuyên khoa</option>
-                                @foreach($specialties as $sp)
-                                    <option value="{{ $sp->id }}" {{ old('specialty_id') == $sp->id ? 'selected' : '' }}>{{ $sp->name }}</option>
-                                @endforeach
-                            </select>
-                            <div class="text-[10px] text-gray-500 mt-1">Bài viết sẽ hiển thị ở trang giới thiệu chuyên khoa này.</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <h3 class="text-base font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">Ảnh đại diện</h3>
-                    
+        <!-- Cột chính (Content) -->
+        <div class="flex-1 space-y-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div class="space-y-6">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">URL Ảnh thu nhỏ</label>
-                        <input type="url" name="thumbnail_url" x-model="thumbnailUrl" placeholder="https://example.com/image.jpg" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none font-mono">
-                        
-                        <div class="mt-4 rounded-lg border border-dashed border-gray-300 p-2 flex items-center justify-center bg-gray-50 aspect-video relative overflow-hidden">
-                            <template x-if="thumbnailUrl">
-                                <img :src="thumbnailUrl" class="w-full h-full object-cover rounded" alt="Preview" @error="thumbnailUrl = ''">
-                            </template>
-                            <template x-if="!thumbnailUrl">
-                                <div class="text-center text-gray-400">
-                                    <i class="fa-regular fa-image text-4xl mb-2"></i>
-                                    <div class="text-xs font-medium">Chưa có ảnh</div>
-                                </div>
-                            </template>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tiêu đề bài viết <span class="text-red-500">*</span></label>
+                        <input type="text" name="title" id="title" value="{{ old('title') }}" required
+                            class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-base font-medium outline-none" placeholder="Nhập tiêu đề...">
+                        @error('title') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Đường dẫn tĩnh (Slug)</label>
+                        <div class="flex rounded-lg shadow-sm">
+                            <span class="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm">
+                                {{ url('/') }}/
+                            </span>
+                            <input type="text" name="slug" id="slug" value="{{ old('slug') }}"
+                                class="flex-1 block w-full min-w-0 px-3 py-2 border border-gray-300 rounded-r-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none" placeholder="De-trong-de-tu-dong-tao">
                         </div>
+                        <p class="text-xs text-gray-500 mt-1">Chuỗi định danh trên URL. Để trống hệ thống sẽ tự tạo từ Tiêu đề.</p>
+                        @error('slug') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tóm tắt nội dung</label>
+                        <textarea name="summary" rows="3"
+                            class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none" placeholder="Nhập tóm tắt ngắn cho bài viết (Sẽ hiển thị ở trang chủ hoặc thẻ mô tả mạng xã hội)...">{{ old('summary') }}</textarea>
+                        @error('summary') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nội dung chi tiết <span class="text-red-500">*</span></label>
+                        <textarea name="content" rows="15" required
+                            class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none font-mono" placeholder="Nhập nội dung bài viết. Bạn có thể sử dụng các thẻ HTML cơ bản ở đây...">{{ old('content') }}</textarea>
+                        @error('content') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Cột phụ (Sidebar) -->
+        <div class="lg:w-80 space-y-6">
+            <!-- Xuất bản -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                <h3 class="font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">Xuất bản</h3>
                 
-                <div class="flex items-center gap-3">
-                    <a href="{{ route('admin.posts.index') }}" class="flex-1 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-center py-2.5 rounded-lg text-sm font-bold transition-colors shadow-sm">
-                        Huỷ bỏ
-                    </a>
-                    <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg text-sm font-bold transition-colors shadow-sm flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-floppy-disk"></i> Lưu bài viết
-                    </button>
+                <div class="mb-4">
+                    <label class="flex items-center cursor-pointer">
+                        <div class="relative">
+                            <input type="checkbox" name="is_published" value="1" class="sr-only peer" {{ old('is_published', '1') == '1' ? 'checked' : '' }}>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                        </div>
+                        <span class="ms-3 text-sm font-medium text-gray-700">Đăng bài ngay lập tức</span>
+                    </label>
+                    <p class="text-xs text-gray-500 mt-2">Tắt công tắc này để lưu dưới dạng Bản nháp (Draft).</p>
+                </div>
+
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-save"></i> Lưu bài viết
+                </button>
+            </div>
+
+            <!-- Phân loại & Chuyên khoa -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                <h3 class="font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">Phân loại</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Loại bài viết <span class="text-red-500">*</span></label>
+                        <select name="post_type" required class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
+                            <option value="news" {{ old('post_type') == 'news' ? 'selected' : '' }}>Tin tức y tế</option>
+                            <option value="service" {{ old('post_type') == 'service' ? 'selected' : '' }}>Giới thiệu Dịch vụ</option>
+                            <option value="guide" {{ old('post_type') == 'guide' ? 'selected' : '' }}>Hướng dẫn khách hàng</option>
+                            <option value="announcement" {{ old('post_type') == 'announcement' ? 'selected' : '' }}>Thông báo hệ thống</option>
+                        </select>
+                        @error('post_type') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Chuyên khoa liên quan</label>
+                        <select name="specialty_id" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
+                            <option value="">-- Không phân loại chuyên khoa --</option>
+                            @foreach($specialties as $sp)
+                                <option value="{{ $sp->id }}" {{ old('specialty_id') == $sp->id ? 'selected' : '' }}>{{ $sp->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('specialty_id') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
                 </div>
             </div>
-            
+
+            <!-- Ảnh đại diện (Thumbnail) -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5" x-data="imageUploader()">
+                <h3 class="font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">Ảnh đại diện</h3>
+                
+                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg relative overflow-hidden group hover:border-blue-400 transition-colors cursor-pointer" @click="$refs.fileInput.click()">
+                    
+                    <!-- Box hiển thị khi chưa có ảnh -->
+                    <div class="space-y-1 text-center" x-show="!imageUrl">
+                        <i class="fa-regular fa-image text-4xl text-gray-400 mb-2"></i>
+                        <div class="flex text-sm text-gray-600 justify-center">
+                            <span class="relative bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none">
+                                <span>Tải ảnh lên</span>
+                            </span>
+                        </div>
+                        <p class="text-xs text-gray-500">PNG, JPG, WEBP tới 2MB</p>
+                    </div>
+
+                    <!-- Box hiển thị Preview Ảnh -->
+                    <div x-show="imageUrl" class="absolute inset-0 w-full h-full" style="display: none;">
+                        <img :src="imageUrl" class="w-full h-full object-cover">
+                        <!-- Nút đổi ảnh (hiển thị khi hover) -->
+                        <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span class="text-white font-medium flex items-center gap-2">
+                                <i class="fa-solid fa-pen"></i> Đổi ảnh khác
+                            </span>
+                        </div>
+                    </div>
+
+                    <input type="file" x-ref="fileInput" name="thumbnail" accept="image/jpeg,image/png,image/webp" class="sr-only" @change="fileChosen">
+                </div>
+                @error('thumbnail') <p class="text-red-500 text-xs mt-2">{{ $message }}</p> @enderror
+            </div>
         </div>
     </form>
+
+    <script>
+        // Alpine component for Image Upload Preview
+        function imageUploader() {
+            return {
+                imageUrl: '',
+                fileChosen(event) {
+                    this.fileToDataUrl(event, src => this.imageUrl = src)
+                },
+                fileToDataUrl(event, callback) {
+                    if (! event.target.files.length) return
+                    let file = event.target.files[0],
+                        reader = new FileReader()
+                    reader.readAsDataURL(file)
+                    reader.onload = e => callback(e.target.result)
+                }
+            }
+        }
+
+        // Auto-generate Slug from Title using pure JS
+        document.addEventListener('DOMContentLoaded', function() {
+            const titleInput = document.getElementById('title');
+            const slugInput = document.getElementById('slug');
+            let isSlugEdited = false;
+
+            // Chặn auto-gen nếu user cố tình tự gõ slug
+            slugInput.addEventListener('input', function() {
+                isSlugEdited = this.value.trim() !== '';
+            });
+
+            titleInput.addEventListener('input', function() {
+                if (!isSlugEdited) {
+                    let title = this.value;
+                    // Chuyển đổi tiếng việt có dấu thành không dấu
+                    let slug = title.toLowerCase();
+                    slug = slug.replace(/á|à|ả|ạ|ã|ă|ắ|ằ|ẳ|ẵ|ặ|â|ấ|ầ|ẩ|ẫ|ậ/gi, 'a');
+                    slug = slug.replace(/é|è|ẻ|ẽ|ẹ|ê|ế|ề|ể|ễ|ệ/gi, 'e');
+                    slug = slug.replace(/i|í|ì|ỉ|ĩ|ị/gi, 'i');
+                    slug = slug.replace(/ó|ò|ỏ|õ|ọ|ô|ố|ồ|ổ|ỗ|ộ|ơ|ớ|ờ|ở|ỡ|ợ/gi, 'o');
+                    slug = slug.replace(/ú|ù|ủ|ũ|ụ|ư|ứ|ừ|ử|ữ|ự/gi, 'u');
+                    slug = slug.replace(/ý|ỳ|ỷ|ỹ|ỵ/gi, 'y');
+                    slug = slug.replace(/đ/gi, 'd');
+                    // Xóa ký tự đặc biệt
+                    slug = slug.replace(/\`|\~|\!|\@|\#|\||\$|\%|\^|\&|\*|\(|\)|\+|\=|\,|\.|\/|\?|\>|\<|\'|\"|\:|\;|_/gi, '');
+                    // Thay khoảng trắng bằng gạch ngang
+                    slug = slug.replace(/ /gi, "-");
+                    // Xóa các gạch ngang liên tiếp
+                    slug = slug.replace(/\-\-\-\-\-/gi, '-');
+                    slug = slug.replace(/\-\-\-\-/gi, '-');
+                    slug = slug.replace(/\-\-\-/gi, '-');
+                    slug = slug.replace(/\-\-/gi, '-');
+                    // Xóa gạch ngang ở đầu và cuối
+                    slug = '@' + slug + '@';
+                    slug = slug.replace(/\@\-|\-\@|\@/gi, '');
+                    
+                    slugInput.value = slug;
+                }
+            });
+        });
+    </script>
 </x-layouts.admin>

@@ -48,6 +48,10 @@ class AuthController extends Controller
 
             $request->session()->regenerate();
 
+            if ($request->filled('redirect')) {
+                return redirect($request->input('redirect'));
+            }
+
             return $this->redirectToDashboard();
         }
 
