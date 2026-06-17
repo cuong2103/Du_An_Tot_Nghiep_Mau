@@ -12,8 +12,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
             $table->string('session_token', 100)->unique();
-            $table->timestamp('ended_at')->nullable();
+            $table->enum('status', ['active', 'closed'])->default('active');
             $table->timestamp('created_at')->useCurrent();
+            $table->timestamp('ended_at')->nullable();
         });
     }
 

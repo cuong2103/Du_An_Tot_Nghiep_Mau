@@ -21,6 +21,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign('room_id')->references('id')->on('rooms')->onDelete('cascade');
+            $table->unique(['doctor_profile_id', 'room_id', 'day_of_week'], 'ws_doc_room_day_unique');
         });
     }
 

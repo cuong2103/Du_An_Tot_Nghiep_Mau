@@ -55,7 +55,8 @@
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Người thực hiện</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Module</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mô tả</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Đối tượng</th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Chi tiết</th>
                         <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">IP</th>
                     </tr>
                 </thead>
@@ -83,10 +84,24 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {{ $log->module }}
                         </td>
-                        <td class="px-6 py-4">
-                            <div class="text-sm text-gray-800 line-clamp-2" title="{{ $log->description }}">
-                                {{ Str::limit($log->description, 80) }}
-                            </div>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            @if($log->ref_type && $log->ref_id)
+                                {{ $log->ref_type }} #{{ $log->ref_id }}
+                            @else
+                                —
+                            @endif
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            @if($log->old_data || $log->new_data)
+                                <button type="button" x-data x-on:click="$dispatch('open-log-modal', {
+                                    old: {{ json_encode($log->old_data ?? new stdClass) }},
+                                    new: {{ json_encode($log->new_data ?? new stdClass) }}
+                                })" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                                    <i class="fa-solid fa-code"></i> Xem
+                                </button>
+                            @else
+                                <span class="text-gray-400 text-sm">—</span>
+                            @endif
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-xs text-gray-500 font-mono">
                             {{ $log->ip_address ?? '—' }}
@@ -114,5 +129,42 @@
             {{ $logs->links() }}
         </div>
         @endif
+    </div>
+
+    <!-- JSON Diff Modal using Alpine -->
+    <div x-data="{ open: false, oldData: {}, newData: {} }" 
+         @open-log-modal.window="open = true; oldData = $event.detail.old; newData = $event.detail.new;"
+         x-show="open" 
+         class="fixed inset-0 z-50 overflow-y-auto" 
+         style="display: none;">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="open" @click="open = false" class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" aria-hidden="true"></div>
+            
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            
+            <div x-show="open" class="inline-block px-4 pt-5 pb-4 overflow-hidden text-left align-bottom transition-all transform bg-white rounded-xl shadow-xl sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full sm:p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium leading-6 text-gray-900">Chi tiết thay đổi dữ liệu</h3>
+                    <button @click="open = false" class="text-gray-400 hover:text-gray-500">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="text-sm font-bold text-red-600 mb-2">Dữ liệu cũ (Old Data)</h4>
+                        <pre class="bg-red-50 border border-red-100 p-4 rounded-lg text-xs overflow-auto max-h-96 font-mono" x-text="JSON.stringify(oldData, null, 2)"></pre>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold text-green-600 mb-2">Dữ liệu mới (New Data)</h4>
+                        <pre class="bg-green-50 border border-green-100 p-4 rounded-lg text-xs overflow-auto max-h-96 font-mono" x-text="JSON.stringify(newData, null, 2)"></pre>
+                    </div>
+                </div>
+                <div class="mt-5 sm:mt-6">
+                    <button @click="open = false" type="button" class="inline-flex justify-center w-full px-4 py-2 text-base font-medium text-white bg-gray-900 border border-transparent rounded-lg shadow-sm hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:text-sm">
+                        Đóng
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </x-layouts.admin>

@@ -1,179 +1,190 @@
-<x-layouts.admin title="Lịch sử Thông báo">
-    <div>
-        <!-- Header & Alert -->
-        <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-                <h2 class="text-2xl font-bold text-gray-900">Quản lý Thông báo</h2>
-                <p class="text-gray-500 mt-1">Lịch sử các thông báo đã gửi cho hệ thống và người dùng</p>
-            </div>
-            <div>
-                <a href="{{ route('admin.notifications.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-                    <i class="fa-solid fa-paper-plane"></i> Gửi thông báo mới
-                </a>
-            </div>
+<x-layouts.admin title="Quản lý Thông báo">
+<div class="space-y-6" x-data="{ showFilters: false }">
+    
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Quản lý Thông báo</h1>
+            <p class="text-sm text-gray-500 mt-1">Quản lý và theo dõi các thông báo trong hệ thống</p>
         </div>
+        <div class="flex items-center gap-3">
+            <button @click="showFilters = !showFilters" class="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                <i class="fa-solid fa-filter mr-2"></i>Bộ lọc
+            </button>
+            <a href="{{ route('admin.notifications.create') }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors shadow-sm">
+                <i class="fa-solid fa-plus mr-2"></i>Tạo thông báo mới
+            </a>
+        </div>
+    </div>
 
-        @if(session('success'))
-            <div class="mb-6 bg-green-50 text-green-800 rounded-lg p-4 flex items-center border border-green-200" x-data="{ show: true }" x-show="show">
-                <i class="fa-solid fa-circle-check text-green-500 mr-3 text-lg"></i>
-                <span class="flex-1 text-sm font-medium">{{ session('success') }}</span>
-                <button @click="show = false" class="text-green-600 hover:text-green-900">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-        @endif
-
-        <!-- Filter & Search -->
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
-            <form method="GET" action="{{ route('admin.notifications.index') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                <div class="md:col-span-2">
-                    <label class="block text-xs font-medium text-gray-700 mb-1">Tìm kiếm</label>
-                    <div class="relative">
-                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Tiêu đề, tên hoặc SĐT người nhận..."
-                            class="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fa-solid fa-search text-gray-400"></i>
-                        </div>
-                    </div>
-                </div>
-
+    <!-- Filters -->
+    <div x-show="showFilters" x-collapse>
+        <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+            <form action="{{ route('admin.notifications.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
-                    <label class="block text-xs font-medium text-gray-700 mb-1">Loại thông báo</label>
-                    <select name="type" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Loại thông báo</label>
+                    <select name="type" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
                         <option value="">Tất cả</option>
-                        <option value="appointment" {{ request('type') == 'appointment' ? 'selected' : '' }}>Lịch hẹn</option>
-                        <option value="result" {{ request('type') == 'result' ? 'selected' : '' }}>Kết quả</option>
-                        <option value="system" {{ request('type') == 'system' ? 'selected' : '' }}>Hệ thống</option>
-                        <option value="reminder" {{ request('type') == 'reminder' ? 'selected' : '' }}>Nhắc nhở</option>
+                        <option value="appointment" {{ request('type') === 'appointment' ? 'selected' : '' }}>Lịch hẹn</option>
+                        <option value="result" {{ request('type') === 'result' ? 'selected' : '' }}>Kết quả</option>
+                        <option value="system" {{ request('type') === 'system' ? 'selected' : '' }}>Hệ thống</option>
+                        <option value="reminder" {{ request('type') === 'reminder' ? 'selected' : '' }}>Nhắc nhở</option>
                     </select>
                 </div>
-
                 <div>
-                    <label class="block text-xs font-medium text-gray-700 mb-1">Trạng thái đọc</label>
-                    <select name="is_read" class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm outline-none bg-white">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Kênh gửi</label>
+                    <select name="channel" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
                         <option value="">Tất cả</option>
-                        <option value="1" {{ request('is_read') === '1' ? 'selected' : '' }}>Đã đọc</option>
-                        <option value="0" {{ request('is_read') === '0' ? 'selected' : '' }}>Chưa đọc</option>
+                        <option value="in_web" {{ request('channel') === 'in_web' ? 'selected' : '' }}>Web</option>
+                        <option value="email" {{ request('channel') === 'email' ? 'selected' : '' }}>Email</option>
                     </select>
                 </div>
-
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Trạng thái gửi</label>
+                    <select name="status" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                        <option value="">Tất cả</option>
+                        <option value="sent" {{ request('status') === 'sent' ? 'selected' : '' }}>Đã gửi</option>
+                        <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Chưa gửi / Lên lịch</option>
+                    </select>
+                </div>
                 <div class="flex items-end gap-2">
-                    <button type="submit" class="w-full bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                        Lọc
+                    <button type="submit" class="w-full px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900 transition-colors text-sm font-medium">
+                        Lọc kết quả
                     </button>
-                    @if(request()->anyFilled(['search', 'type', 'channel', 'is_read']))
-                        <a href="{{ route('admin.notifications.index') }}" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm font-medium transition-colors" title="Xóa bộ lọc">
-                            <i class="fa-solid fa-rotate-right"></i>
-                        </a>
+                    @if(request()->anyFilled(['type', 'channel', 'status']))
+                    <a href="{{ route('admin.notifications.index') }}" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors text-sm font-medium text-center">
+                        Xóa
+                    </a>
                     @endif
                 </div>
             </form>
         </div>
+    </div>
 
-        <!-- Data Table -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-gray-50 border-b border-gray-100 text-xs uppercase tracking-wider text-gray-500 font-semibold">
-                            <th class="px-6 py-4">Người nhận</th>
-                            <th class="px-6 py-4">Nội dung</th>
-                            <th class="px-6 py-4">Phân loại & Kênh</th>
-                            <th class="px-6 py-4 text-center">Trạng thái</th>
-                            <th class="px-6 py-4 text-right">Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        @forelse($notifications as $noti)
-                        <tr class="hover:bg-gray-50 transition-colors {{ !$noti->is_read ? 'bg-blue-50/30' : '' }}">
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold flex-shrink-0">
-                                        {{ $noti->user ? $noti->user->avatar_initials : '?' }}
-                                    </div>
-                                    <div>
-                                        <div class="font-medium text-gray-900">{{ $noti->user ? $noti->user->full_name : 'N/A' }}</div>
-                                        <div class="text-xs text-gray-500">{{ $noti->user ? $noti->user->phone : '' }}</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="font-bold text-gray-900 text-sm mb-1 line-clamp-1" title="{{ $noti->title }}">{{ $noti->title }}</div>
-                                <div class="text-xs text-gray-500 line-clamp-2" title="{{ $noti->content }}">{{ $noti->content }}</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex flex-col gap-1.5 items-start">
-                                    @if($noti->type === 'appointment')
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800"><i class="fa-regular fa-calendar-check mr-1"></i> {{ $noti->type_label }}</span>
-                                    @elseif($noti->type === 'result')
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-800"><i class="fa-solid fa-file-medical mr-1"></i> {{ $noti->type_label }}</span>
-                                    @elseif($noti->type === 'reminder')
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-orange-100 text-orange-800"><i class="fa-regular fa-bell mr-1"></i> {{ $noti->type_label }}</span>
-                                    @else
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-800"><i class="fa-solid fa-gear mr-1"></i> {{ $noti->type_label }}</span>
-                                    @endif
+    <!-- Alert -->
+    @if(session('success'))
+    <div class="p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50" role="alert">
+        <span class="font-medium">Thành công!</span> {{ session('success') }}
+    </div>
+    @endif
 
-                                    @if($noti->channel === 'email')
-                                        <span class="text-xs text-gray-500"><i class="fa-regular fa-envelope mr-1"></i> Email</span>
-                                    @elseif($noti->channel === 'zalo')
-                                        <span class="text-xs text-gray-500"><i class="fa-regular fa-comment mr-1"></i> Zalo</span>
-                                    @else
-                                        <span class="text-xs text-gray-500"><i class="fa-solid fa-globe mr-1"></i> Trong Web</span>
-                                    @endif
+    <!-- Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Người nhận</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tiêu đề / Nội dung</th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Phân loại</th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Thời gian</th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @forelse($notifications as $notification)
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm">
+                                    {{ $notification->user->avatar_initials ?? substr($notification->user->full_name ?? '?', 0, 1) }}
                                 </div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-center">
-                                @if($noti->is_read)
-                                    <span class="text-gray-400 text-xs flex flex-col items-center gap-1">
-                                        <i class="fa-solid fa-check-double text-blue-500 text-sm"></i>
-                                        Đã đọc
-                                    </span>
+                                <div class="ml-3">
+                                    <div class="text-sm font-medium text-gray-900">{{ $notification->user->full_name ?? 'Không xác định' }}</div>
+                                    <div class="text-xs text-gray-500">{{ $notification->user->email ?? '' }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-gray-900 line-clamp-1" title="{{ $notification->title }}">{{ $notification->title }}</div>
+                            <div class="text-xs text-gray-500 line-clamp-1 mt-0.5" title="{{ $notification->content }}">{{ $notification->content }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                            @php
+                                $typeColors = [
+                                    'appointment' => 'blue',
+                                    'result' => 'green',
+                                    'system' => 'gray',
+                                    'reminder' => 'yellow'
+                                ];
+                                $color = $typeColors[$notification->type] ?? 'gray';
+                            @endphp
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-{{ $color }}-100 text-{{ $color }}-800 border border-{{ $color }}-200">
+                                {{ $notification->type_label }}
+                            </span>
+                            <div class="mt-1">
+                                @if($notification->channel === 'email')
+                                    <span class="text-xs text-gray-500"><i class="fa-regular fa-envelope"></i> Email</span>
+                                @elseif($notification->channel === 'in_web')
+                                    <span class="text-xs text-gray-500"><i class="fa-regular fa-bell"></i> Web</span>
                                 @else
-                                    <span class="text-gray-500 text-xs flex flex-col items-center gap-1">
-                                        <i class="fa-solid fa-check text-gray-300 text-sm"></i>
-                                        Chưa đọc
-                                    </span>
+                                    <span class="text-xs text-gray-500"><i class="fa-brands fa-whatsapp"></i> Zalo</span>
                                 @endif
-                                <div class="text-[10px] text-gray-400 mt-1">{{ $noti->created_at->format('d/m/Y H:i') }}</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <form action="{{ route('admin.notifications.destroy', $noti->id) }}" method="POST" class="inline-block">
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                            @if($notification->is_sent)
+                                <span class="inline-flex items-center text-green-600 text-sm font-medium">
+                                    <i class="fa-solid fa-check-circle mr-1.5"></i> Đã gửi
+                                </span>
+                            @else
+                                <span class="inline-flex items-center text-yellow-600 text-sm font-medium">
+                                    <i class="fa-solid fa-clock mr-1.5"></i> 
+                                    {{ $notification->scheduled_at ? 'Chờ gửi (Hẹn giờ)' : 'Chưa gửi' }}
+                                </span>
+                            @endif
+                            @if($notification->channel === 'in_web')
+                                <div class="mt-1 text-xs">
+                                    {!! $notification->is_read ? '<span class="text-green-500">Đã xem</span>' : '<span class="text-gray-400">Chưa xem</span>' !!}
+                                </div>
+                            @endif
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
+                            <div>{{ $notification->created_at->format('d/m/Y H:i') }}</div>
+                            @if($notification->scheduled_at)
+                                <div class="text-xs text-blue-600 mt-1">Lịch: {{ $notification->scheduled_at->format('d/m/Y H:i') }}</div>
+                            @endif
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div class="flex items-center justify-end gap-2">
+                                @if($notification->is_sent)
+                                <form action="{{ route('admin.notifications.resend', $notification) }}" method="POST" class="inline-block" onsubmit="return confirm('Bạn có chắc muốn gửi lại thông báo này?');">
+                                    @csrf
+                                    <button type="submit" class="text-blue-600 hover:text-blue-900" title="Gửi lại">
+                                        <i class="fa-solid fa-rotate-right"></i>
+                                    </button>
+                                </form>
+                                @endif
+                                <form action="{{ route('admin.notifications.destroy', $notification) }}" method="POST" class="inline-block" onsubmit="return confirm('Xoá thông báo này? Hành động này không thể hoàn tác.');">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" 
-                                        onclick="return confirm('Bạn có chắc muốn xoá lịch sử thông báo này không?')"
-                                        class="text-red-600 hover:text-red-900 transition-colors p-2"
-                                        title="Xoá thông báo">
+                                    <button type="submit" class="text-red-600 hover:text-red-900" title="Xóa">
                                         <i class="fa-solid fa-trash"></i>
                                     </button>
                                 </form>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="5" class="px-6 py-12 text-center text-gray-500">
-                                <div class="flex flex-col items-center justify-center">
-                                    <div class="h-16 w-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                                        <i class="fa-regular fa-bell-slash text-2xl text-gray-400"></i>
-                                    </div>
-                                    <h3 class="text-lg font-medium text-gray-900">Chưa có thông báo nào</h3>
-                                    <p class="mt-1 text-sm text-gray-500">Bắt đầu tương tác với người dùng bằng cách gửi thông báo.</p>
-                                    <a href="{{ route('admin.notifications.create') }}" class="mt-4 bg-blue-50 text-blue-600 hover:bg-blue-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                                        Gửi thông báo ngay
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-            
-            @if($notifications->hasPages())
-            <div class="px-6 py-4 border-t border-gray-100 bg-white">
-                {{ $notifications->links() }}
-            </div>
-            @endif
+                            </div>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                            <div class="mb-3 text-gray-300"><i class="fa-solid fa-bell-slash text-4xl"></i></div>
+                            <p>Không tìm thấy thông báo nào</p>
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
+        
+        <!-- Pagination -->
+        @if($notifications->hasPages())
+        <div class="px-6 py-4 border-t border-gray-100 bg-gray-50">
+            {{ $notifications->links() }}
+        </div>
+        @endif
     </div>
+
+</div>
 </x-layouts.admin>

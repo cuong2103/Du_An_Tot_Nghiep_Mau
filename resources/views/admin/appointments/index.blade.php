@@ -1,7 +1,7 @@
-<x-layouts.admin title="Quản lý Lịch hẹn">
-    <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+<x-layouts.admin title="Trung tâm Khám bệnh">
+    <div class="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-            <h2 class="text-2xl font-bold text-gray-900">Quản lý Lịch hẹn</h2>
+            <h2 class="text-2xl font-bold text-gray-900">Trung tâm Khám bệnh</h2>
             <p class="text-gray-500 mt-1">Danh sách lượt khám và đặt chỗ</p>
         </div>
         <div class="flex gap-2">
@@ -16,6 +16,8 @@
             </a>
         </div>
     </div>
+
+    <x-admin.appointment-tabs />
 
     <!-- Alert -->
     @if(session('success'))

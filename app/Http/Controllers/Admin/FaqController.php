@@ -120,6 +120,11 @@ class FaqController extends Controller
     public function destroy($id)
     {
         $faq = Faq::findOrFail($id);
+        
+        if ($faq->view_count > 0 && $faq->is_active == 1) {
+            return back()->with('error', 'Chỉ cho phép xoá khi lượt xem bằng 0 hoặc FAQ đang tắt.');
+        }
+
         $faq->delete();
 
         SystemLog::create([

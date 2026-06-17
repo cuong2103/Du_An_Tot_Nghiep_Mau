@@ -4,6 +4,11 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 
+// Home
+Route::get('/', function () {
+    return view('welcome');
+})->name('home');
+
 // Guest only
 Route::middleware('guest')->group(function () {
     Route::get('/dang-nhap', [AuthController::class, 'showLogin'])->name('login');
@@ -134,18 +139,30 @@ Route::middleware(['auth', 'role:admin'])
 
         // Chatbot
         Route::prefix('chatbot')->name('chatbot.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\Admin\ChatbotController::class, 'index'])->name('index');
-            Route::post('/intents', [\App\Http\Controllers\Admin\ChatbotController::class, 'storeIntent'])->name('intents.store');
-            Route::put('/intents/{id}', [\App\Http\Controllers\Admin\ChatbotController::class, 'updateIntent'])->name('intents.update');
-            Route::patch('/intents/{id}/toggle-active', [\App\Http\Controllers\Admin\ChatbotController::class, 'toggleIntentActive'])->name('intents.toggle-active');
-            Route::delete('/intents/{id}', [\App\Http\Controllers\Admin\ChatbotController::class, 'destroyIntent'])->name('intents.destroy');
+            // Intents
+            Route::prefix('intents')->name('intents.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'index'])->name('index');
+                Route::post('/', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'store'])->name('store');
+                Route::get('/{id}', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'show'])->name('show');
+                Route::put('/{id}', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'update'])->name('update');
+                Route::patch('/{id}/toggle-active', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'toggleActive'])->name('toggle-active');
+                Route::delete('/{id}', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'destroy'])->name('destroy');
 
-            Route::post('/responses', [\App\Http\Controllers\Admin\ChatbotController::class, 'storeResponse'])->name('responses.store');
-            Route::put('/responses/{id}', [\App\Http\Controllers\Admin\ChatbotController::class, 'updateResponse'])->name('responses.update');
-            Route::patch('/responses/{id}/toggle-active', [\App\Http\Controllers\Admin\ChatbotController::class, 'toggleResponseActive'])->name('responses.toggle-active');
-            Route::delete('/responses/{id}', [\App\Http\Controllers\Admin\ChatbotController::class, 'destroyResponse'])->name('responses.destroy');
+                // Responses (Nested inside Intents)
+                Route::post('/{intent_id}/responses', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'storeResponse'])->name('responses.store');
+                Route::put('/{intent_id}/responses/{id}', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'updateResponse'])->name('responses.update');
+                Route::patch('/{intent_id}/responses/{id}/toggle-active', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'toggleResponseActive'])->name('responses.toggle-active');
+                Route::delete('/{intent_id}/responses/{id}', [\App\Http\Controllers\Admin\ChatbotIntentController::class, 'destroyResponse'])->name('responses.destroy');
+            });
 
-            Route::post('/test', [\App\Http\Controllers\Admin\ChatbotController::class, 'testChat'])->name('test');
+            // Sessions
+            Route::prefix('sessions')->name('sessions.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\Admin\ChatSessionController::class, 'index'])->name('index');
+                Route::get('/{id}', [\App\Http\Controllers\Admin\ChatSessionController::class, 'show'])->name('show');
+                Route::patch('/messages/{id}/flag', [\App\Http\Controllers\Admin\ChatSessionController::class, 'toggleFlag'])->name('messages.flag');
+            });
+            
+            // Note: If you want to keep the old testChat route, you might want to put it here or remove it.
         });
 
         // Thông báo
@@ -153,7 +170,27 @@ Route::middleware(['auth', 'role:admin'])
             Route::get('/', [\App\Http\Controllers\Admin\NotificationController::class, 'index'])->name('index');
             Route::get('/create', [\App\Http\Controllers\Admin\NotificationController::class, 'create'])->name('create');
             Route::post('/', [\App\Http\Controllers\Admin\NotificationController::class, 'store'])->name('store');
-            Route::delete('/{id}', [\App\Http\Controllers\Admin\NotificationController::class, 'destroy'])->name('destroy');
+            Route::delete('/{notification}', [\App\Http\Controllers\Admin\NotificationController::class, 'destroy'])->name('destroy');
+            Route::post('/{notification}/resend', [\App\Http\Controllers\Admin\NotificationController::class, 'resend'])->name('resend');
+        });
+
+        // Nhật ký lịch hẹn
+        Route::prefix('appointment-logs')->name('appointment-logs.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\AppointmentLogController::class, 'index'])->name('index');
+        });
+
+        // Đánh giá và Phản hồi
+        Route::prefix('reviews')->name('reviews.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\ReviewController::class, 'index'])->name('index');
+            Route::get('/{id}', [\App\Http\Controllers\Admin\ReviewController::class, 'show'])->name('show');
+            Route::patch('/{id}/toggle-visibility', [\App\Http\Controllers\Admin\ReviewController::class, 'toggleVisibility'])->name('toggle-visibility');
+            Route::delete('/{id}', [\App\Http\Controllers\Admin\ReviewController::class, 'destroy'])->name('destroy');
+        });
+
+        // Giám sát Khám Lâm sàng
+        Route::prefix('clinical-visits')->name('clinical-visits.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\ClinicalVisitController::class, 'index'])->name('index');
+            Route::get('/{id}', [\App\Http\Controllers\Admin\ClinicalVisitController::class, 'show'])->name('show');
         });
 
         // Cài đặt
@@ -167,6 +204,5 @@ Route::middleware(['auth', 'role:admin'])
 // API routes (normally in routes/api.php, placing here for convenience)
 Route::prefix('api')->name('api.')->group(function () {
     Route::get('/doctors/{doctorId}/available-slots', [\App\Http\Controllers\Api\WorkScheduleController::class, 'getAvailableSlots'])->name('doctors.available-slots');
+    Route::post('/chatbot/message', [\App\Http\Controllers\Api\ChatbotController::class, 'sendMessage'])->name('chatbot.message');
 });
-
-

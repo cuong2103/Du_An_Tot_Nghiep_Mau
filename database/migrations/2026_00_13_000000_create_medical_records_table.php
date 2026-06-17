@@ -18,7 +18,7 @@ return new class extends Migration
             $table->text('advice')->nullable();
             $table->date('followup_date')->nullable();
             $table->enum('treatment_result', ['outpatient', 'admitted', 'monitoring'])->default('outpatient');
-            $table->json('result_files')->nullable();
+            $table->json('result_files');
             $table->timestamps();
         });
     }
