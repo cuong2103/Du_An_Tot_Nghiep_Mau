@@ -125,7 +125,9 @@ Route::middleware(['auth', 'role:admin'])
         // FAQ
         Route::prefix('faqs')->name('faqs.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\FaqController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\Admin\FaqController::class, 'create'])->name('create');
             Route::post('/', [\App\Http\Controllers\Admin\FaqController::class, 'store'])->name('store');
+            Route::get('/{id}/edit', [\App\Http\Controllers\Admin\FaqController::class, 'edit'])->name('edit');
             Route::put('/{id}', [\App\Http\Controllers\Admin\FaqController::class, 'update'])->name('update');
             Route::patch('/{id}/toggle-active', [\App\Http\Controllers\Admin\FaqController::class, 'toggleActive'])->name('toggle-active');
             Route::delete('/{id}', [\App\Http\Controllers\Admin\FaqController::class, 'destroy'])->name('destroy');
@@ -143,6 +145,8 @@ Route::middleware(['auth', 'role:admin'])
             Route::put('/responses/{id}', [\App\Http\Controllers\Admin\ChatbotController::class, 'updateResponse'])->name('responses.update');
             Route::patch('/responses/{id}/toggle-active', [\App\Http\Controllers\Admin\ChatbotController::class, 'toggleResponseActive'])->name('responses.toggle-active');
             Route::delete('/responses/{id}', [\App\Http\Controllers\Admin\ChatbotController::class, 'destroyResponse'])->name('responses.destroy');
+
+            Route::post('/test', [\App\Http\Controllers\Admin\ChatbotController::class, 'testChat'])->name('test');
         });
 
         // Thông báo
@@ -172,6 +176,4 @@ Route::prefix('api')->name('api.')->group(function () {
     Route::get('/work-schedule/by-doctor-date/{doctorId}/{appointmentDate}', [\App\Http\Controllers\Api\WorkScheduleController::class, 'getWorkSchedule'])->name('work-schedule');
 });
 
-Route::get('/', function () {
-    return redirect()->route('login');
-});
+
