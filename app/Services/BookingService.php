@@ -149,6 +149,75 @@ class BookingService
                 'reason'         => 'Bệnh nhân đặt lịch qua website',
             ]);
 
+            // Tự động tạo thông báo cho bệnh nhân và bác sĩ
+            $appointment->load(['patientProfile.user', 'doctor.user']);
+            $patientUserId = $appointment->patientProfile->user_id ?? $bookedBy->id;
+            $patientUser = User::find($patientUserId);
+            
+            $aptDateStr = Carbon::parse($appointment->appointment_date)->format('d/m/Y');
+            $aptTimeStr = substr($appointment->appointment_time, 0, 5);
+            
+            $patientTitle = "Đặt lịch hẹn thành công";
+            $patientContent = "Lịch hẹn mã {$appointment->appointment_code} của bạn đã được xác nhận vào ngày {$aptDateStr} lúc {$aptTimeStr}.";
+
+            // Thông báo Web cho bệnh nhân
+            \App\Models\Notification::create([
+                'user_id' => $patientUserId,
+                'title' => $patientTitle,
+                'content' => $patientContent,
+                'type' => 'appointment',
+                'channel' => 'in_web',
+                'is_sent' => false,
+                'ref_type' => 'appointment',
+                'ref_id' => $appointment->id,
+            ]);
+
+            // Thông báo Email cho bệnh nhân
+            if ($patientUser && $patientUser->email) {
+                \App\Models\Notification::create([
+                    'user_id' => $patientUserId,
+                    'title' => $patientTitle,
+                    'content' => $patientContent,
+                    'type' => 'appointment',
+                    'channel' => 'email',
+                    'is_sent' => false,
+                    'ref_type' => 'appointment',
+                    'ref_id' => $appointment->id,
+                ]);
+            }
+
+            // Thông báo cho Bác sĩ
+            $doctorUser = $appointment->doctor->user ?? null;
+            if ($doctorUser) {
+                $patientName = $appointment->patientProfile->full_name ?? '—';
+                $doctorTitle = "Có lịch hẹn mới";
+                $doctorContent = "Bạn có lịch hẹn mới mã {$appointment->appointment_code} với bệnh nhân {$patientName} vào ngày {$aptDateStr} lúc {$aptTimeStr}.";
+                
+                \App\Models\Notification::create([
+                    'user_id' => $doctorUser->id,
+                    'title' => $doctorTitle,
+                    'content' => $doctorContent,
+                    'type' => 'appointment',
+                    'channel' => 'in_web',
+                    'is_sent' => false,
+                    'ref_type' => 'appointment',
+                    'ref_id' => $appointment->id,
+                ]);
+                
+                if ($doctorUser->email) {
+                    \App\Models\Notification::create([
+                        'user_id' => $doctorUser->id,
+                        'title' => $doctorTitle,
+                        'content' => $doctorContent,
+                        'type' => 'appointment',
+                        'channel' => 'email',
+                        'is_sent' => false,
+                        'ref_type' => 'appointment',
+                        'ref_id' => $appointment->id,
+                    ]);
+                }
+            }
+
             return $appointment;
         });
     }

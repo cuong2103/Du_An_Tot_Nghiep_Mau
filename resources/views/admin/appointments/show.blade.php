@@ -112,7 +112,26 @@
     <div class="flex flex-col lg:flex-row gap-6">
         
         <!-- CỘT TRÁI & GIỮA (2/3) -->
-        <div class="w-full lg:w-2/3 space-y-6">
+        <div class="w-full lg:w-2/3" x-data="{ activeTab: 'overview' }" @beforeprint.window="activeTab = 'prescription'">
+            
+            <!-- Tabs Header -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6 print:hidden">
+                <div class="flex border-b border-gray-100">
+                    <button type="button" @click="activeTab = 'overview'" :class="{'border-b-2 border-blue-500 text-blue-600 bg-blue-50': activeTab === 'overview', 'text-gray-500 hover:text-gray-700 hover:bg-gray-50': activeTab !== 'overview'}" class="flex-1 py-4 px-2 sm:px-4 text-sm font-bold transition-colors">
+                        <i class="fa-solid fa-circle-info mr-1 sm:mr-2"></i><span class="hidden sm:inline">Tổng quan</span>
+                    </button>
+                    <button type="button" @click="activeTab = 'medical_record'" :class="{'border-b-2 border-blue-500 text-blue-600 bg-blue-50': activeTab === 'medical_record', 'text-gray-500 hover:text-gray-700 hover:bg-gray-50': activeTab !== 'medical_record'}" class="flex-1 py-4 px-2 sm:px-4 text-sm font-bold transition-colors">
+                        <i class="fa-solid fa-file-medical mr-1 sm:mr-2"></i><span class="hidden sm:inline">Bệnh án</span>
+                    </button>
+                    <button type="button" @click="activeTab = 'prescription'" :class="{'border-b-2 border-blue-500 text-blue-600 bg-blue-50': activeTab === 'prescription', 'text-gray-500 hover:text-gray-700 hover:bg-gray-50': activeTab !== 'prescription'}" class="flex-1 py-4 px-2 sm:px-4 text-sm font-bold transition-colors">
+                        <i class="fa-solid fa-pills mr-1 sm:mr-2"></i><span class="hidden sm:inline">Đơn thuốc</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab 1: Tổng quan -->
+            <div x-show="activeTab === 'overview'" class="space-y-6 print:hidden" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+
             
             <!-- Thông tin lịch hẹn -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -435,9 +454,49 @@
                             @endif
                         </div>
                     </div>
+                </div>
+            </div>
+            @endif
+            </div> <!-- End Tab 2 -->
 
-                    <!-- Đơn thuốc -->
-                    @if($appointment->medicalRecord->prescription && $appointment->medicalRecord->prescription->items->isNotEmpty())
+            <!-- Tab 3: Đơn thuốc -->
+            <div x-show="activeTab === 'prescription'" style="display: none;" class="space-y-6" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" id="prescription-print-area">
+                    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between gap-2 print:hidden">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-pills text-blue-500"></i>
+                            <h3 class="text-lg font-bold text-gray-900">Đơn thuốc điện tử</h3>
+                        </div>
+                        <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                            <i class="fa-solid fa-print"></i> In đơn thuốc
+                        </button>
+                    </div>
+                    
+                    <!-- Print Header (Only visible when printing) -->
+                    <div class="hidden print:block p-8 border-b-2 border-gray-800 mb-6">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h1 class="text-2xl font-bold uppercase text-gray-900">BỆNH VIỆN ĐA KHOA CAREBOOK</h1>
+                                <p class="text-sm mt-1">123 Đường Sức Khoẻ, Quận Bình Thủy, TP. Cần Thơ</p>
+                                <p class="text-sm">Hotline: 1900 1234</p>
+                            </div>
+                            <div class="text-right">
+                                <h2 class="text-xl font-bold uppercase mb-1">ĐƠN THUỐC</h2>
+                                <p class="text-sm italic">Mã LH: {{ $appointment->appointment_code }}</p>
+                            </div>
+                        </div>
+                        <div class="mt-6 grid grid-cols-2 gap-4 text-sm">
+                            <div><span class="font-medium">Họ tên bệnh nhân:</span> {{ $appointment->patientProfile->full_name ?? '' }}</div>
+                            <div><span class="font-medium">Giới tính:</span> {{ $appointment->patientProfile->gender === 'male' ? 'Nam' : ($appointment->patientProfile->gender === 'female' ? 'Nữ' : 'Khác') }}</div>
+                            <div><span class="font-medium">Ngày sinh:</span> {{ $appointment->patientProfile->date_of_birth ? \Carbon\Carbon::parse($appointment->patientProfile->date_of_birth)->format('d/m/Y') : '' }}</div>
+                            <div><span class="font-medium">SĐT:</span> {{ $appointment->patientProfile->phone ?? '' }}</div>
+                            <div class="col-span-2"><span class="font-medium">Địa chỉ:</span> {{ $appointment->patientProfile->address ?? '' }}</div>
+                            <div class="col-span-2"><span class="font-medium">Chẩn đoán:</span> {{ optional($appointment->medicalRecord)->diagnosis ?? 'Không có thông tin' }}</div>
+                        </div>
+                    </div>
+
+                    <div class="p-6">
+                    @if(optional($appointment->medicalRecord)->prescription && optional($appointment->medicalRecord->prescription)->items->isNotEmpty())
                     <div>
                         <h4 class="text-sm font-bold text-gray-900 uppercase tracking-wide mb-3 flex items-center gap-2">
                             <i class="fa-solid fa-pills text-blue-500"></i> Đơn thuốc
@@ -455,16 +514,16 @@
                                     @foreach($appointment->medicalRecord->prescription->items as $item)
                                     <tr>
                                         <td class="px-4 py-3">
-                                            <div class="font-medium text-gray-900">{{ $item->medication_name }}</div>
-                                            @if($item->dosage_form)
-                                                <div class="text-xs text-gray-500 mt-0.5">{{ $item->dosage_form }}</div>
+                                            <div class="font-medium text-gray-900">{{ $item['medication_name'] ?? $item->medication_name ?? '' }}</div>
+                                            @if(!empty($item['dosage_form'] ?? $item->dosage_form))
+                                                <div class="text-xs text-gray-500 mt-0.5">{{ $item['dosage_form'] ?? $item->dosage_form }}</div>
                                             @endif
                                         </td>
                                         <td class="px-4 py-3 text-center font-bold text-gray-900">
-                                            {{ $item->quantity }}
+                                            {{ $item['quantity'] ?? $item->quantity ?? '' }}
                                         </td>
                                         <td class="px-4 py-3 text-gray-700">
-                                            {{ $item->instructions }}
+                                            {{ $item['instructions'] ?? $item->instructions ?? '' }}
                                         </td>
                                     </tr>
                                     @endforeach
@@ -475,14 +534,32 @@
                             <div class="mt-2 text-xs text-gray-500 italic">* Lời dặn: {{ $appointment->medicalRecord->prescription->notes }}</div>
                         @endif
                     </div>
+                    @else
+                        <div class="text-center py-12 text-gray-500">
+                            <div class="mb-3"><i class="fa-solid fa-notes-medical text-4xl text-gray-300"></i></div>
+                            <p>Không có đơn thuốc nào được kê cho bệnh nhân này.</p>
+                        </div>
                     @endif
-                </div>
-            </div>
-            @endif
+                    </div>
+
+                    <!-- Print Footer (Only visible when printing) -->
+                    <div class="hidden print:flex justify-between mt-12 p-8">
+                        <div class="text-center">
+                            <p class="font-medium mb-16">Bệnh nhân / Người nhà</p>
+                            <p class="italic text-gray-500">(Ký và ghi rõ họ tên)</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="italic mb-2">Cần Thơ, ngày {{ date('d') }} tháng {{ date('m') }} năm {{ date('Y') }}</p>
+                            <p class="font-medium mb-16">Bác sĩ khám bệnh</p>
+                            <p class="font-bold text-gray-900">{{ $appointment->doctor->full_title ?? 'BS' }}</p>
+                        </div>
+                    </div>
+                </div> <!-- End Print Area -->
+            </div> <!-- End Tab 3 -->
         </div>
 
         <!-- CỘT PHẢI (1/3) -->
-        <div class="w-full lg:w-1/3 space-y-6">
+        <div class="w-full lg:w-1/3 space-y-6 print:hidden">
             
             <!-- Thông tin bác sĩ -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
