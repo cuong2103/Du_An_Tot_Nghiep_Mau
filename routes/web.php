@@ -38,7 +38,7 @@ Route::middleware(['auth', 'role:admin'])
             Route::put('/{id}', [\App\Http\Controllers\Admin\ReceptionistController::class, 'update'])->name('update');
             Route::patch('/{id}/toggle-active', [\App\Http\Controllers\Admin\ReceptionistController::class, 'toggleActive'])->name('toggle-active');
         });
-        
+
         Route::prefix('doctors')->name('doctors.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\DoctorController::class, 'index'])->name('index');
             Route::get('/create', [\App\Http\Controllers\Admin\DoctorController::class, 'create'])->name('create');
@@ -48,7 +48,7 @@ Route::middleware(['auth', 'role:admin'])
             Route::put('/{id}', [\App\Http\Controllers\Admin\DoctorController::class, 'update'])->name('update');
             Route::patch('/{id}/toggle-active', [\App\Http\Controllers\Admin\DoctorController::class, 'toggleActive'])->name('toggle-active');
         });
-        
+
         Route::prefix('patients')->name('patients.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\PatientController::class, 'index'])->name('index');
             Route::get('/create', [\App\Http\Controllers\Admin\PatientController::class, 'create'])->name('create');
@@ -58,7 +58,7 @@ Route::middleware(['auth', 'role:admin'])
             Route::put('/{id}', [\App\Http\Controllers\Admin\PatientController::class, 'update'])->name('update');
             Route::patch('/{id}/toggle-active', [\App\Http\Controllers\Admin\PatientController::class, 'toggleActive'])->name('toggle-active');
         });
-        
+
         // Chuyên khoa
         Route::prefix('specialties')->name('specialties.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\SpecialtyController::class, 'index'])->name('index');
@@ -94,6 +94,7 @@ Route::middleware(['auth', 'role:admin'])
             // Ngoại lệ
             Route::post('/overrides', [\App\Http\Controllers\Admin\WorkScheduleController::class, 'storeOverride'])->name('overrides.store');
             Route::delete('/overrides/{id}', [\App\Http\Controllers\Admin\WorkScheduleController::class, 'destroyOverride'])->name('overrides.destroy');
+            Route::get('/showoverrides/{id}', [\App\Http\Controllers\Admin\WorkScheduleController::class, 'showOverride'])->name('showOverride');
         });
 
         // Lịch hẹn
@@ -163,6 +164,12 @@ Route::middleware(['auth', 'role:admin'])
 // API routes (normally in routes/api.php, placing here for convenience)
 Route::prefix('api')->name('api.')->group(function () {
     Route::get('/doctors/{doctorId}/available-slots', [\App\Http\Controllers\Api\WorkScheduleController::class, 'getAvailableSlots'])->name('doctors.available-slots');
+
+    // Lấy danh sách bác sĩ theo chuyên khoa
+    Route::get('/doctors/by-specialty/{specialtyId}', [\App\Http\Controllers\Api\DoctorController::class, 'getBySpecialty'])->name('doctors.by-specialty');
+
+    // Lấy danh sách bác sĩ theo chuyên khoa
+    Route::get('/work-schedule/by-doctor-date/{doctorId}/{appointmentDate}', [\App\Http\Controllers\Api\WorkScheduleController::class, 'getWorkSchedule'])->name('work-schedule');
 });
 
 Route::get('/', function () {
