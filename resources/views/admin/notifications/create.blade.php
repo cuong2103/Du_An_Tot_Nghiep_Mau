@@ -2,14 +2,16 @@
 <div class="space-y-6">
     
     <!-- Header -->
-    <div class="flex items-center gap-4 mb-8">
-        <a href="{{ route('admin.notifications.index') }}" class="w-10 h-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-blue-600 transition-colors shadow-sm">
-            <i class="fa-solid fa-arrow-left"></i>
-        </a>
-        <div>
-            <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">Soạn Thông báo mới</h1>
-            <p class="text-sm text-gray-500 mt-1">Tạo và gửi thông điệp đến người dùng trong hệ thống CareBook</p>
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
+        <div class="flex items-center text-sm text-gray-500">
+            <a href="{{ route('admin.notifications.index') }}" class="hover:text-blue-600 transition-colors">Thông báo</a>
+            <span class="mx-2 text-gray-300">/</span>
+            <span class="font-bold text-gray-900">Thêm mới</span>
         </div>
+        
+        <a href="{{ route('admin.notifications.index') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors shadow-sm">
+            <i class="fa-solid fa-arrow-left mr-2"></i> Quay lại
+        </a>
     </div>
 
     @if($errors->any())
