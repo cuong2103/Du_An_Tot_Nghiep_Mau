@@ -154,10 +154,10 @@
             </div>
 
             <div class="flex items-center gap-4">
-                <button class="text-gray-400 hover:text-gray-600 relative">
+                <a href="{{ route('admin.notifications.index') }}" class="text-gray-400 hover:text-gray-600 relative" title="Quản lý thông báo">
                     <i class="fa-regular fa-bell text-xl"></i>
-                    <span class="absolute top-0 right-0 -mt-1 -mr-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">3</span>
-                </button>
+                    <!-- <span class="absolute top-0 right-0 -mt-1 -mr-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">3</span> -->
+                </a>
                 
                 <div x-data="{ userMenuOpen: false }" class="relative">
                     <button @click="userMenuOpen = !userMenuOpen" @click.outside="userMenuOpen = false" class="flex items-center gap-2 text-sm text-gray-700 hover:text-gray-900 focus:outline-none">
