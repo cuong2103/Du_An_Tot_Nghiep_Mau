@@ -42,11 +42,7 @@ class SendEmailNotificationJob implements ShouldQueue
         }
 
         try {
-            // Render HTML content because admin can use Rich Text
-            Mail::html($notification->content, function ($message) use ($notification) {
-                $message->to($notification->user->email)
-                        ->subject($notification->title);
-            });
+            Mail::to($notification->user->email)->send(new \App\Mail\NotificationMail($notification));
 
             // Mark as sent
             $notification->update(['is_sent' => true]);

@@ -16,8 +16,13 @@ class ProcessNotifications extends Command
 
     public function handle()
     {
+        $this->info('Bắt đầu quét và tạo thông báo nhắc nhở lịch hẹn...');
         $this->processAppointmentReminders();
-        $this->sendPendingNotifications();
+        $this->info('Hoàn tất quét lịch hẹn.');
+        
+        // ĐÃ XÓA: $this->sendPendingNotifications();
+        // Lý do: Việc gửi email (bao gồm cả email hẹn giờ) giờ đây đã được xử lý tối ưu
+        // thông qua Queue trong file ProcessScheduledNotifications.php và SendEmailNotificationJob.
     }
 
     private function processAppointmentReminders()
@@ -75,7 +80,7 @@ class ProcessNotifications extends Command
                 'content' => $content,
                 'type' => 'reminder',
                 'channel' => 'in_web',
-                'is_sent' => false,
+                'is_sent' => true, // In_web notifications don't need actual sending, they are just saved
                 'ref_type' => 'appointment',
                 'ref_id' => $appointment->id,
             ]);
@@ -102,33 +107,10 @@ class ProcessNotifications extends Command
                 'content' => "Bệnh nhân " . ($appointment->patientProfile->full_name ?? '—') . " có lịch hẹn sau {$timeString}.",
                 'type' => 'reminder',
                 'channel' => 'in_web',
-                'is_sent' => false,
+                'is_sent' => true,
                 'ref_type' => 'appointment',
                 'ref_id' => $appointment->id,
             ]);
-        }
-    }
-
-    private function sendPendingNotifications()
-    {
-        $notifications = Notification::where('is_sent', false)
-            ->where(function ($q) {
-                $q->whereNull('scheduled_at')
-                  ->orWhere('scheduled_at', '<=', now());
-            })
-            ->with('user')
-            ->get();
-
-        foreach ($notifications as $notification) {
-            try {
-                if ($notification->channel === 'email' && $notification->user && $notification->user->email) {
-                    Mail::to($notification->user->email)->send(new NotificationMail($notification));
-                }
-                
-                $notification->update(['is_sent' => true]);
-            } catch (\Exception $e) {
-                \Log::error("Failed to send notification {$notification->id}: " . $e->getMessage());
-            }
         }
     }
 }

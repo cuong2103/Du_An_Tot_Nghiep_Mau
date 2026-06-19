@@ -16,23 +16,29 @@
         <!-- Tabs Navigation -->
         <div class="flex border-b border-gray-100 overflow-x-auto hide-scrollbar">
             <button @click="activeTab = 'general'" 
-                class="px-6 py-4 text-sm font-medium transition-colors border-b-2 whitespace-nowrap"
+                class="px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium transition-colors border-b-2 whitespace-nowrap"
                 :class="activeTab === 'general' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'">
-                <i class="fa-solid fa-house-chimney-medical mr-2"></i> Thông tin Phòng khám
+                <i class="fa-solid fa-house-chimney-medical mr-1 sm:mr-2"></i> Thông tin Phòng khám
             </button>
             <button @click="activeTab = 'booking'" 
-                class="px-6 py-4 text-sm font-medium transition-colors border-b-2 whitespace-nowrap"
+                class="px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium transition-colors border-b-2 whitespace-nowrap"
                 :class="activeTab === 'booking' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'">
-                <i class="fa-regular fa-calendar-check mr-2"></i> Quy định Đặt lịch
+                <i class="fa-regular fa-calendar-check mr-1 sm:mr-2"></i> Quy định Đặt lịch
+            </button>
+
+            <button @click="activeTab = 'system'" 
+                class="px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium transition-colors border-b-2 whitespace-nowrap"
+                :class="activeTab === 'system' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'">
+                <i class="fa-solid fa-server mr-1 sm:mr-2"></i> Hệ thống chung
             </button>
             <button @click="activeTab = 'logs'" 
-                class="px-6 py-4 text-sm font-medium transition-colors border-b-2 whitespace-nowrap"
+                class="px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium transition-colors border-b-2 whitespace-nowrap"
                 :class="activeTab === 'logs' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'">
-                <i class="fa-solid fa-shield-halved mr-2"></i> Nhật ký hệ thống
+                <i class="fa-solid fa-shield-halved mr-1 sm:mr-2"></i> Nhật ký hệ thống
             </button>
         </div>
 
-        <form action="{{ route('admin.settings.update') }}" method="POST" enctype="multipart/form-data" :class="activeTab === 'logs' ? '' : 'p-6'">
+        <form action="{{ route('admin.settings.update') }}" method="POST" enctype="multipart/form-data" :class="activeTab === 'logs' ? '' : 'p-4 sm:p-6'">
             @csrf
             @method('PUT')
 
@@ -40,28 +46,28 @@
             <div x-show="activeTab === 'general'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;">
                 
                 <!-- Logo -->
-                <div class="mb-8 pb-6 border-b border-gray-100">
+                <div class="mb-6 sm:mb-8 pb-6 border-b border-gray-100">
                     <label class="block text-sm font-medium text-gray-700 mb-3">Logo Phòng khám</label>
-                    <div class="flex items-center gap-6">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
                         @if(isset($settings['logo']) && $settings['logo'] !== '')
-                            <div class="w-24 h-24 rounded-xl border border-gray-200 overflow-hidden bg-gray-50 flex-shrink-0 flex items-center justify-center p-2 shadow-sm">
+                            <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-xl border border-gray-200 overflow-hidden bg-gray-50 flex-shrink-0 flex items-center justify-center p-2 shadow-sm">
                                 <img src="{{ asset('storage/' . $settings['logo']) }}" alt="Logo" class="max-w-full max-h-full object-contain">
                             </div>
                         @else
-                            <div class="w-24 h-24 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 flex-shrink-0 flex items-center justify-center text-gray-400">
-                                <i class="fa-solid fa-image text-3xl"></i>
+                            <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 flex-shrink-0 flex items-center justify-center text-gray-400">
+                                <i class="fa-solid fa-image text-2xl sm:text-3xl"></i>
                             </div>
                         @endif
-                        <div class="flex-1">
-                            <input type="file" name="logo" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-5 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer transition-colors">
+                        <div class="flex-1 w-full">
+                            <input type="file" name="logo" accept="image/*" class="block w-full text-xs sm:text-sm text-gray-500 file:mr-4 file:py-2 file:sm:py-2.5 file:px-4 file:sm:px-5 file:rounded-lg file:border-0 file:text-xs file:sm:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer transition-colors">
                             <p class="text-xs text-gray-500 mt-2.5 leading-relaxed">Định dạng khuyên dùng: <strong class="text-gray-700">PNG nền trong suốt</strong>.<br>Kích thước tỷ lệ 1:1 hoặc 3:1. Dung lượng tối đa 2MB.</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
                     <!-- Cột 1 -->
-                    <div class="space-y-5">
+                    <div class="space-y-4 sm:space-y-5">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Tên Phòng khám <span class="text-red-500">*</span></label>
                             <input type="text" name="settings[clinic_name]" value="{{ $settings['clinic_name'] ?? 'Carebook Clinic' }}" required class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm">
@@ -80,7 +86,7 @@
                     </div>
                     
                     <!-- Cột 2 -->
-                    <div class="space-y-5">
+                    <div class="space-y-4 sm:space-y-5">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Địa chỉ Cơ sở</label>
                             <textarea name="settings[address]" rows="3" class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm" placeholder="Ví dụ: Số 123 Đường ABC, Quận XYZ, TP.HCM">{{ $settings['address'] ?? '' }}</textarea>
@@ -95,9 +101,9 @@
                 </div>
 
                 <!-- SOCIAL SECTION MERGED -->
-                <div class="mt-8 pt-6 border-t border-gray-100">
+                <div class="mt-6 sm:mt-8 pt-6 border-t border-gray-100">
                     <h3 class="text-base font-semibold text-gray-900 mb-4">Mạng xã hội & Tích hợp</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
                         <div class="space-y-5">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Đường dẫn Fanpage Facebook</label>
@@ -123,53 +129,76 @@
 
             <!-- TAB 2: BOOKING RULES -->
             <div x-show="activeTab === 'booking'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;">
-                <div class="space-y-6">
-                    <div class="bg-blue-50/50 p-5 rounded-xl border border-blue-100">
-                        <div class="flex gap-4 items-start">
+                <div class="space-y-4 sm:space-y-6">
+                    <div class="bg-blue-50/50 p-4 sm:p-5 rounded-xl border border-blue-100">
+                        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 items-start">
                             <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0 mt-1">
                                 <i class="fa-solid fa-users-viewfinder text-lg"></i>
                             </div>
-                            <div class="flex-1">
-                                <label class="block text-base font-bold text-gray-900 mb-1">Sức chứa mỗi ca khám (Max Patients/Slot)</label>
-                                <p class="text-xs text-gray-500 mb-3">Số lượng bệnh nhân tối đa có thể đặt cùng một khung giờ (Ví dụ: 8h00 - 8h30 có tối đa 5 người).</p>
-                                <div class="flex items-center gap-2">
-                                    <input type="number" name="settings[max_appointment_per_slot]" value="{{ $settings['max_appointment_per_slot'] ?? 5 }}" min="1" max="50" class="block w-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm font-medium text-center">
-                                    <input type="hidden" name="settings_types[max_appointment_per_slot]" value="integer">
-                                    <span class="text-sm font-medium text-gray-600">bệnh nhân / 1 slot</span>
+                            <div class="flex-1 w-full">
+                                <label class="block text-base font-bold text-gray-900 mb-1">Giới hạn đặt lịch của 1 bệnh nhân</label>
+                                <p class="text-xs text-gray-500 mb-3">Giới hạn số lịch hẹn 1 bệnh nhân được đặt trong 1 ngày, tránh đặt trùng spam.</p>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <input type="number" name="settings[max_appointments_per_day_per_patient]" value="{{ $settings['max_appointments_per_day_per_patient'] ?? 1 }}" min="1" max="10" class="block w-24 sm:w-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm font-medium text-center">
+                                    <input type="hidden" name="settings_types[max_appointments_per_day_per_patient]" value="integer">
+                                    <span class="text-sm font-medium text-gray-600">lịch / ngày</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="bg-gray-50 p-5 rounded-xl border border-gray-200">
-                        <div class="flex gap-4 items-start">
+                    <div class="bg-gray-50 p-4 sm:p-5 rounded-xl border border-gray-200">
+                        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 items-start">
                             <div class="w-10 h-10 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center flex-shrink-0 mt-1">
                                 <i class="fa-solid fa-hourglass-start text-lg"></i>
                             </div>
-                            <div class="flex-1">
-                                <label class="block text-base font-bold text-gray-900 mb-1">Thời gian đặt trước tối thiểu (Advance Booking)</label>
-                                <p class="text-xs text-gray-500 mb-3">Bệnh nhân phải đặt lịch trước giờ khám ít nhất bao nhiêu tiếng để phòng khám kịp chuẩn bị.</p>
-                                <div class="flex items-center gap-2">
-                                    <input type="number" name="settings[booking_advance_hours]" value="{{ $settings['booking_advance_hours'] ?? 2 }}" min="0" max="72" class="block w-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm font-medium text-center">
-                                    <input type="hidden" name="settings_types[booking_advance_hours]" value="integer">
-                                    <span class="text-sm font-medium text-gray-600">tiếng</span>
+                            <div class="flex-1 w-full">
+                                <label class="block text-base font-bold text-gray-900 mb-1">Khoảng thời gian cho phép đặt lịch</label>
+                                <p class="text-xs text-gray-500 mb-3">Số ngày tối thiểu phải đặt trước (0 = được đặt ngay trong ngày) và số ngày tối đa đặt xa nhất.</p>
+                                <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                                    <div class="flex items-center justify-between sm:justify-start gap-2">
+                                        <span class="text-sm text-gray-600 w-24 sm:w-auto">Tối thiểu:</span>
+                                        <input type="number" name="settings[min_booking_days_ahead]" value="{{ $settings['min_booking_days_ahead'] ?? 0 }}" min="0" class="block w-20 sm:w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm text-center">
+                                        <input type="hidden" name="settings_types[min_booking_days_ahead]" value="integer">
+                                    </div>
+                                    <div class="flex items-center justify-between sm:justify-start gap-2">
+                                        <span class="text-sm text-gray-600 w-24 sm:w-auto">Tối đa:</span>
+                                        <div class="flex items-center gap-2">
+                                            <input type="number" name="settings[max_booking_days_ahead]" value="{{ $settings['max_booking_days_ahead'] ?? 30 }}" min="1" class="block w-20 sm:w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm text-center">
+                                            <input type="hidden" name="settings_types[max_booking_days_ahead]" value="integer">
+                                            <span class="text-sm font-medium text-gray-600">ngày</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="bg-orange-50/50 p-5 rounded-xl border border-orange-100">
-                        <div class="flex gap-4 items-start">
+                    <div class="bg-orange-50/50 p-4 sm:p-5 rounded-xl border border-orange-100">
+                        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 items-start">
                             <div class="w-10 h-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center flex-shrink-0 mt-1">
                                 <i class="fa-solid fa-ban text-lg"></i>
                             </div>
-                            <div class="flex-1">
-                                <label class="block text-base font-bold text-gray-900 mb-1">Thời gian cho phép hủy lịch (Cancellation Policy)</label>
-                                <p class="text-xs text-gray-500 mb-3">Bệnh nhân chỉ được phép tự hủy lịch hẹn trên web trước giờ khám bao nhiêu tiếng.</p>
-                                <div class="flex items-center gap-2">
-                                    <input type="number" name="settings[cancel_before_hours]" value="{{ $settings['cancel_before_hours'] ?? 12 }}" min="0" max="168" class="block w-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm font-medium text-center">
-                                    <input type="hidden" name="settings_types[cancel_before_hours]" value="integer">
-                                    <span class="text-sm font-medium text-gray-600">tiếng</span>
+                            <div class="flex-1 w-full">
+                                <label class="block text-base font-bold text-gray-900 mb-1">Hủy lịch và Vắng mặt</label>
+                                <p class="text-xs text-gray-500 mb-3">Quy định về thời hạn hủy lịch và thời gian tự động đánh dấu vắng mặt.</p>
+                                <div class="flex flex-col gap-3">
+                                    <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                                        <span class="text-sm text-gray-600 w-full sm:w-48">Hủy lịch trước giờ khám:</span>
+                                        <div class="flex items-center gap-2">
+                                            <input type="number" name="settings[cancel_deadline_hours]" value="{{ $settings['cancel_deadline_hours'] ?? 2 }}" min="0" class="block w-20 sm:w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm text-center">
+                                            <input type="hidden" name="settings_types[cancel_deadline_hours]" value="integer">
+                                            <span class="text-sm font-medium text-gray-600">tiếng</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                                        <span class="text-sm text-gray-600 w-full sm:w-48">Tự động absent sau:</span>
+                                        <div class="flex items-center gap-2">
+                                            <input type="number" name="settings[auto_absent_minutes]" value="{{ $settings['auto_absent_minutes'] ?? 30 }}" min="0" class="block w-20 sm:w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm text-center">
+                                            <input type="hidden" name="settings_types[auto_absent_minutes]" value="integer">
+                                            <span class="text-sm font-medium text-gray-600">phút quá giờ hẹn</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -178,21 +207,55 @@
             </div>
 
 
+            <!-- TAB 3: SYSTEM RULES -->
+            <div x-show="activeTab === 'system'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;">
+                <div class="space-y-4 sm:space-y-6">
+                    <div class="bg-red-50 p-4 sm:p-5 rounded-xl border border-red-200">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0">
+                                    <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-base font-bold text-red-900">Chế độ Bảo trì (Maintenance Mode)</h3>
+                                    <p class="text-xs text-red-700">Bật chế độ bảo trì, chặn truy cập web (trừ admin).</p>
+                                </div>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="hidden" name="settings[maintenance_mode]" value="false">
+                                    <input type="checkbox" name="settings[maintenance_mode]" value="true" {{ (isset($settings['maintenance_mode']) && filter_var($settings['maintenance_mode'], FILTER_VALIDATE_BOOLEAN)) ? 'checked' : '' }} class="sr-only peer">
+                                    <div class="w-11 h-6 bg-red-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+                                </label>
+                                <input type="hidden" name="settings_types[maintenance_mode]" value="boolean">
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <label class="block text-sm font-bold text-red-900 mb-1">Nội dung hiển thị khi bảo trì</label>
+                            <textarea name="settings[maintenance_message]" rows="3" class="block w-full px-4 py-2 border border-red-300 rounded-lg focus:ring-red-500 focus:border-red-500 text-sm bg-white text-red-800 placeholder-red-300" placeholder="Hệ thống đang bảo trì...">{{ $settings['maintenance_message'] ?? 'Hệ thống đang bảo trì nâng cấp, vui lòng quay lại sau.' }}</textarea>
+                            <input type="hidden" name="settings_types[maintenance_message]" value="string">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- END TABS -->
+
+
 
             <!-- Submit Button -->
             <div x-show="activeTab !== 'logs'" class="mt-8 pt-5 border-t border-gray-100">
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm">
+                <button type="submit" class="w-full sm:w-auto justify-center bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 sm:py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm">
                     <i class="fa-solid fa-save"></i> Lưu toàn bộ cấu hình
                 </button>
             </div>
         </form>
 
-        <!-- TAB 3: LOGS -->
-        <div x-show="activeTab === 'logs'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="p-6" style="display: none;">
+        <!-- TAB 4: LOGS -->
+        <div x-show="activeTab === 'logs'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="p-4 sm:p-6" style="display: none;">
             
             <div class="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <h3 class="text-base font-semibold text-gray-900 mb-1">Theo dõi hoạt động của người dùng trong hệ thống</h3>
-                <button type="submit" form="logFilterForm" name="export" value="json" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm">
+                <button type="submit" form="logFilterForm" name="export" value="json" class="w-full sm:w-auto justify-center bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 sm:py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm">
                     <i class="fa-solid fa-file-export"></i> Xuất JSON
                 </button>
             </div>
@@ -342,15 +405,15 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <h4 class="text-sm font-bold text-red-600 mb-2">Dữ liệu cũ (Old Data)</h4>
-                        <pre class="bg-red-50 border border-red-100 p-4 rounded-lg text-xs overflow-auto max-h-96 font-mono text-left" x-text="JSON.stringify(oldData, null, 2)"></pre>
+                        <pre class="bg-red-50 border border-red-100 p-3 sm:p-4 rounded-lg text-xs overflow-x-auto max-w-full max-h-96 font-mono text-left" x-text="JSON.stringify(oldData, null, 2)"></pre>
                     </div>
                     <div>
                         <h4 class="text-sm font-bold text-green-600 mb-2">Dữ liệu mới (New Data)</h4>
-                        <pre class="bg-green-50 border border-green-100 p-4 rounded-lg text-xs overflow-auto max-h-96 font-mono text-left" x-text="JSON.stringify(newData, null, 2)"></pre>
+                        <pre class="bg-green-50 border border-green-100 p-3 sm:p-4 rounded-lg text-xs overflow-x-auto max-w-full max-h-96 font-mono text-left" x-text="JSON.stringify(newData, null, 2)"></pre>
                     </div>
                 </div>
                 <div class="mt-5 sm:mt-6">
-                    <button @click="open = false" type="button" class="inline-flex justify-center w-full px-4 py-2 text-base font-medium text-white bg-gray-900 border border-transparent rounded-lg shadow-sm hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:text-sm">
+                    <button @click="open = false" type="button" class="inline-flex justify-center w-full px-4 py-3 sm:py-2 text-base font-medium text-white bg-gray-900 border border-transparent rounded-lg shadow-sm hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:text-sm">
                         Đóng
                     </button>
                 </div>

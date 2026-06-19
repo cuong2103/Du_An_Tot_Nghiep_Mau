@@ -31,8 +31,9 @@ class NotificationMail extends Mailable implements ShouldQueue
     public function content(): Content
     {
         return new Content(
-            view: 'emails.notification',
+            view: 'emails.system_notification',
             with: [
+                'title' => $this->notification->title,
                 'content' => $this->notification->content,
             ],
         );
