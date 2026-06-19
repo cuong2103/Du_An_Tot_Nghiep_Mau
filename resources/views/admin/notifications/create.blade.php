@@ -1,15 +1,17 @@
 <x-layouts.admin title="Tạo Thông báo mới">
-<div class="space-y-6">
+<div class="space-y-4 md:space-y-6">
     
     <!-- Header -->
-    <div class="flex items-center gap-4 mb-8">
-        <a href="{{ route('admin.notifications.index') }}" class="w-10 h-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-blue-600 transition-colors shadow-sm">
-            <i class="fa-solid fa-arrow-left"></i>
-        </a>
-        <div>
-            <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">Soạn Thông báo mới</h1>
-            <p class="text-sm text-gray-500 mt-1">Tạo và gửi thông điệp đến người dùng trong hệ thống CareBook</p>
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
+        <div class="flex items-center text-sm text-gray-500">
+            <a href="{{ route('admin.notifications.index') }}" class="hover:text-blue-600 transition-colors">Thông báo</a>
+            <span class="mx-2 text-gray-300">/</span>
+            <span class="font-bold text-gray-900">Thêm mới</span>
         </div>
+        
+        <a href="{{ route('admin.notifications.index') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors shadow-sm">
+            <i class="fa-solid fa-arrow-left mr-2"></i> Quay lại
+        </a>
     </div>
 
     @if($errors->any())
@@ -26,20 +28,20 @@
     <form action="{{ route('admin.notifications.store') }}" method="POST">
         @csrf
         
-        <div class="flex flex-col lg:flex-row gap-8">
+        <div class="flex flex-col lg:flex-row gap-5 md:gap-8 pb-6 lg:pb-0">
             <!-- Cột trái: Nội dung chính -->
-            <div class="flex-1 space-y-6">
+            <div class="flex-1 space-y-5 md:space-y-6">
                 <!-- Card Soạn thảo -->
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
+                    <div class="px-4 md:px-6 py-3 md:py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
                         <i class="fa-regular fa-pen-to-square text-blue-500"></i>
-                        <h3 class="text-base font-bold text-gray-900">Nội dung Thông báo</h3>
+                        <h3 class="text-sm md:text-base font-bold text-gray-900">Nội dung Thông báo</h3>
                     </div>
                     
-                    <div class="p-6 md:p-8 space-y-6">
+                    <div class="p-4 md:p-8 space-y-5 md:space-y-6">
                         <!-- Người nhận -->
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Người nhận <span class="text-red-500">*</span></label>
+                            <label class="block text-sm md:text-base font-semibold text-gray-700 mb-2">Người nhận <span class="text-red-500">*</span></label>
                             <select name="user_ids[]" id="choices-users" multiple="multiple" class="w-full" required>
                                 @foreach($users as $user)
                                     <option value="{{ $user->id }}" {{ is_array(old('user_ids')) && in_array($user->id, old('user_ids')) ? 'selected' : '' }}>
@@ -47,38 +49,38 @@
                                     </option>
                                 @endforeach
                             </select>
-                            <p class="text-xs text-gray-500 mt-2 flex items-center"><i class="fa-solid fa-circle-info mr-1 text-blue-400"></i> Hỗ trợ tìm kiếm theo tên hoặc email. Có thể chọn cùng lúc nhiều người.</p>
+                            <p class="text-xs text-gray-500 mt-2 flex items-start md:items-center"><i class="fa-solid fa-circle-info mr-1.5 mt-0.5 md:mt-0 text-blue-400"></i> <span>Hỗ trợ tìm kiếm theo tên hoặc email. Có thể chọn cùng lúc nhiều người.</span></p>
                         </div>
 
                         <!-- Tiêu đề -->
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Tiêu đề <span class="text-red-500">*</span></label>
-                            <input type="text" name="title" value="{{ old('title') }}" required placeholder="Ví dụ: Lịch hẹn của bạn đã được xác nhận..." class="w-full border-gray-200 rounded-xl shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors bg-gray-50 focus:bg-white text-base py-3">
+                            <label class="block text-sm md:text-base font-semibold text-gray-700 mb-2">Tiêu đề <span class="text-red-500">*</span></label>
+                            <input type="text" name="title" value="{{ old('title') }}" required placeholder="Ví dụ: Lịch hẹn của bạn đã được xác nhận..." class="w-full border-gray-200 rounded-xl shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors bg-gray-50 focus:bg-white text-sm md:text-base py-3">
                         </div>
 
                         <!-- Nội dung -->
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Thông điệp chi tiết <span class="text-red-500">*</span></label>
-                            <textarea name="content" rows="6" required placeholder="Nhập nội dung chi tiết bạn muốn gửi đến người nhận..." class="w-full border-gray-200 rounded-xl shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors bg-gray-50 focus:bg-white resize-y p-4">{{ old('content') }}</textarea>
+                            <label class="block text-sm md:text-base font-semibold text-gray-700 mb-2">Thông điệp chi tiết <span class="text-red-500">*</span></label>
+                            <textarea name="content" rows="6" required placeholder="Nhập nội dung chi tiết bạn muốn gửi đến người nhận..." class="w-full border-gray-200 rounded-xl shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors bg-gray-50 focus:bg-white resize-y p-3 md:p-4 text-sm md:text-base">{{ old('content') }}</textarea>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Cột phải: Cấu hình gửi -->
-            <div class="w-full lg:w-1/3 space-y-6">
+            <div class="w-full lg:w-1/3 space-y-5 md:space-y-6">
                 <!-- Card Tùy chọn -->
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
+                    <div class="px-4 md:px-6 py-3 md:py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
                         <i class="fa-solid fa-sliders text-blue-500"></i>
-                        <h3 class="text-base font-bold text-gray-900">Cấu hình gửi</h3>
+                        <h3 class="text-sm md:text-base font-bold text-gray-900">Cấu hình gửi</h3>
                     </div>
                     
-                    <div class="p-6 space-y-6">
+                    <div class="p-4 md:p-6 space-y-5 md:space-y-6">
                         <!-- Loại thông báo -->
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-3">Phân loại <span class="text-red-500">*</span></label>
-                            <select name="type" class="w-full border-gray-200 rounded-xl shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2 md:mb-3">Phân loại <span class="text-red-500">*</span></label>
+                            <select name="type" class="w-full border-gray-200 rounded-xl shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm md:text-base" required>
                                 <option value="system" {{ old('type') == 'system' ? 'selected' : '' }}>Hệ thống (System)</option>
                                 <option value="reminder" {{ old('type') == 'reminder' ? 'selected' : '' }}>Nhắc nhở (Reminder)</option>
                                 <option value="appointment" {{ old('type') == 'appointment' ? 'selected' : '' }}>Lịch hẹn (Appointment)</option>
@@ -88,21 +90,21 @@
 
                         <!-- Kênh gửi -->
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-3">Kênh gửi <span class="text-red-500">*</span></label>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2 md:mb-3">Kênh gửi <span class="text-red-500">*</span></label>
                             <div class="space-y-3">
-                                <label class="flex items-center p-3 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors group">
-                                    <input type="checkbox" name="channels[]" value="in_web" class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" checked>
+                                <label class="flex items-start md:items-center p-3 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors group">
+                                    <input type="checkbox" name="channels[]" value="in_web" class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mt-0.5 md:mt-0" checked>
                                     <div class="ml-3">
                                         <div class="text-sm font-bold text-gray-900 group-hover:text-blue-700 transition-colors"><i class="fa-regular fa-bell text-gray-400 mr-1 group-hover:text-blue-500"></i> Trong hệ thống</div>
-                                        <div class="text-xs text-gray-500">Nhận trực tiếp trên Website</div>
+                                        <div class="text-xs text-gray-500 mt-0.5 md:mt-0">Nhận trực tiếp trên Website</div>
                                     </div>
                                 </label>
                                 
-                                <label class="flex items-center p-3 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors group">
-                                    <input type="checkbox" name="channels[]" value="email" class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" {{ is_array(old('channels')) && in_array('email', old('channels')) ? 'checked' : '' }}>
+                                <label class="flex items-start md:items-center p-3 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors group">
+                                    <input type="checkbox" name="channels[]" value="email" class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mt-0.5 md:mt-0" {{ is_array(old('channels')) && in_array('email', old('channels')) ? 'checked' : '' }}>
                                     <div class="ml-3">
                                         <div class="text-sm font-bold text-gray-900 group-hover:text-blue-700 transition-colors"><i class="fa-regular fa-envelope text-gray-400 mr-1 group-hover:text-blue-500"></i> Gửi qua Email</div>
-                                        <div class="text-xs text-gray-500">Email tự động từ hệ thống</div>
+                                        <div class="text-xs text-gray-500 mt-0.5 md:mt-0">Email tự động từ hệ thống</div>
                                     </div>
                                 </label>
                             </div>
@@ -110,9 +112,9 @@
 
                         <!-- Hẹn giờ -->
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-3">Lên lịch (Tùy chọn)</label>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2 md:mb-3">Lên lịch (Tùy chọn)</label>
                             <div class="relative">
-                                <input type="datetime-local" name="scheduled_at" value="{{ old('scheduled_at') }}" class="w-full border-gray-200 rounded-xl shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2.5">
+                                <input type="datetime-local" name="scheduled_at" value="{{ old('scheduled_at') }}" class="w-full border-gray-200 rounded-xl shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2.5 text-sm md:text-base">
                             </div>
                             <p class="text-xs text-gray-500 mt-2 leading-relaxed">Nếu để trống, hệ thống sẽ thực hiện gửi ngay lập tức. Nếu có chọn giờ, thông báo sẽ được lưu vào Queue.</p>
                         </div>
@@ -120,9 +122,11 @@
                 </div>
 
                 <!-- Submit Button -->
-                <button type="submit" class="w-full py-4 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-200 transition-all font-bold text-base flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30">
-                    <i class="fa-solid fa-paper-plane"></i> Phát hành Thông báo
-                </button>
+                <div class="sticky bottom-4 z-20 lg:static lg:bottom-auto">
+                    <button type="submit" class="w-full py-3.5 md:py-4 bg-blue-600 text-white rounded-xl md:rounded-2xl hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-200 transition-all font-bold text-base flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30">
+                        <i class="fa-solid fa-paper-plane"></i> Phát hành Thông báo
+                    </button>
+                </div>
             </div>
         </div>
     </form>
