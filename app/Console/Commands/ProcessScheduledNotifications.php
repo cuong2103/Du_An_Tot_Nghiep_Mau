@@ -32,8 +32,10 @@ class ProcessScheduledNotifications extends Command
         // Lấy tất cả thông báo qua email, chưa gửi, và đã tới giờ gửi
         $notifications = Notification::where('channel', 'email')
             ->where('is_sent', false)
-            ->whereNotNull('scheduled_at')
-            ->where('scheduled_at', '<=', now())
+            ->where(function ($q) {
+                $q->whereNull('scheduled_at')
+                  ->orWhere('scheduled_at', '<=', now());
+            })
             ->get();
 
         $count = $notifications->count();

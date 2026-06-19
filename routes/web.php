@@ -198,7 +198,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::prefix('settings')->name('settings.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('index');
             Route::put('/', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('update');
-            Route::get('/logs', [\App\Http\Controllers\Admin\SettingController::class, 'logs'])->name('logs');
+
         });
     });
 
