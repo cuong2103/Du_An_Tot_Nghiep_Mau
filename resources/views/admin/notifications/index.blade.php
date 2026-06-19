@@ -160,9 +160,96 @@
             </table>
         </div>
         
-        <!-- Pagination -->
+        <!-- Pagination Desktop -->
         @if($campaigns->hasPages())
         <div class="px-6 py-4 border-t border-gray-100 bg-gray-50">
+            {{ $campaigns->links() }}
+        </div>
+        @endif
+    </div>
+
+    <!-- Mobile/Tablet List View -->
+    <div class="block lg:hidden space-y-4">
+        @forelse($campaigns as $campaign)
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 transition-all hover:shadow-md">
+            <div class="flex justify-between items-start mb-3 border-b border-gray-50 pb-3">
+                <div class="flex-1">
+                    <h3 class="text-sm font-bold text-gray-900 mb-1 leading-snug">{{ $campaign->title }}</h3>
+                    <p class="text-xs text-gray-600 line-clamp-2">{{ $campaign->content }}</p>
+                </div>
+                <div class="flex items-center gap-1 ml-3">
+                    @if($campaign->total_email > 0 && $campaign->sent_email_count < $campaign->total_email)
+                    <form action="{{ route('admin.notifications.resend') }}" method="POST" class="inline-block" onsubmit="return confirm('Gửi lại các email bị lỗi?');">
+                        @csrf
+                        <input type="hidden" name="title" value="{{ $campaign->title }}">
+                        <input type="hidden" name="created_at" value="{{ $campaign->created_at }}">
+                        <button type="submit" class="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-colors" title="Gửi lại">
+                            <i class="fa-solid fa-rotate-right"></i>
+                        </button>
+                    </form>
+                    @endif
+                    <form action="{{ route('admin.notifications.destroy') }}" method="POST" class="inline-block" onsubmit="return confirm('Xoá chiến dịch này?');">
+                        @csrf
+                        @method('DELETE')
+                        <input type="hidden" name="title" value="{{ $campaign->title }}">
+                        <input type="hidden" name="created_at" value="{{ $campaign->created_at }}">
+                        <button type="submit" class="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg transition-colors" title="Xóa">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 text-sm bg-gray-50 p-3 rounded-lg mb-3">
+                <div>
+                    <span class="text-gray-500 block text-xs mb-1 font-medium">Loại</span>
+                    @php
+                        $color = $typeColors[$campaign->type] ?? 'gray';
+                        $label = $typeLabels[$campaign->type] ?? 'Khác';
+                    @endphp
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-{{ $color }}-100 text-{{ $color }}-800 border border-{{ $color }}-200">
+                        {{ $label }}
+                    </span>
+                    <div class="mt-2 text-xs font-medium text-gray-900">
+                        <i class="fa-solid fa-users mr-1 text-gray-400"></i> {{ number_format($campaign->total_recipients) }} người
+                    </div>
+                </div>
+                <div>
+                    <span class="text-gray-500 block text-xs mb-1 font-medium">Tiến độ gửi</span>
+                    <div class="space-y-1.5">
+                        @if($campaign->total_in_web > 0)
+                            <div class="text-xs text-gray-600 font-medium">
+                                <i class="fa-regular fa-bell text-blue-500 mr-1"></i> Web: {{ $campaign->read_in_web_count }}/{{ $campaign->total_in_web }}
+                            </div>
+                        @endif
+                        @if($campaign->total_email > 0)
+                            <div class="text-xs text-gray-600 font-medium">
+                                <i class="fa-regular fa-envelope text-red-500 mr-1"></i> Email: {{ $campaign->sent_email_count }}/{{ $campaign->total_email }}
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-between items-center text-xs font-medium text-gray-500">
+                <span class="flex items-center"><i class="fa-regular fa-clock mr-1.5"></i> {{ \Carbon\Carbon::parse($campaign->created_at)->format('d/m/Y H:i') }}</span>
+                @if($campaign->scheduled_at)
+                    <span class="{{ \Carbon\Carbon::parse($campaign->scheduled_at)->isPast() ? 'text-green-600 bg-green-50' : 'text-blue-600 bg-blue-50' }} flex items-center px-2 py-1 rounded">
+                        <i class="fa-regular fa-calendar-check mr-1.5"></i> Lịch: {{ \Carbon\Carbon::parse($campaign->scheduled_at)->format('d/m/Y H:i') }}
+                    </span>
+                @endif
+            </div>
+        </div>
+        @empty
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center text-gray-500">
+            <div class="mb-3 text-gray-300"><i class="fa-solid fa-bullhorn text-4xl"></i></div>
+            <p class="font-medium">Không có chiến dịch thông báo nào</p>
+        </div>
+        @endforelse
+
+        <!-- Pagination Mobile -->
+        @if($campaigns->hasPages())
+        <div class="mt-4">
             {{ $campaigns->links() }}
         </div>
         @endif
