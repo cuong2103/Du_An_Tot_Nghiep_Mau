@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 use Illuminate\Support\Facades\Schedule;
 
 Schedule::command('notifications:process')->everyMinute();
+Schedule::command('notifications:process-scheduled')->everyMinute();

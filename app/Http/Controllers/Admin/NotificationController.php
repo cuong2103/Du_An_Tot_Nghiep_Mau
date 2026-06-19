@@ -11,7 +11,22 @@ class NotificationController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Notification::with('user')->orderBy('created_at', 'desc');
+        // Group by campaign logic
+        $query = Notification::selectRaw('
+            title, 
+            content, 
+            type, 
+            created_at,
+            MAX(scheduled_at) as scheduled_at,
+            COUNT(DISTINCT user_id) as total_recipients,
+            SUM(CASE WHEN channel = "email" THEN 1 ELSE 0 END) as total_email,
+            SUM(CASE WHEN channel = "in_web" THEN 1 ELSE 0 END) as total_in_web,
+            SUM(CASE WHEN channel = "email" AND is_sent = 1 THEN 1 ELSE 0 END) as sent_email_count,
+            SUM(CASE WHEN channel = "in_web" AND is_read = 1 THEN 1 ELSE 0 END) as read_in_web_count,
+            MAX(is_sent) as is_sent
+        ')
+        ->groupBy('title', 'content', 'type', 'created_at')
+        ->orderBy('created_at', 'desc');
 
         // Filters
         if ($request->filled('type')) {
@@ -22,13 +37,16 @@ class NotificationController extends Controller
         }
         if ($request->filled('status')) {
             $status = $request->status;
-            if ($status === 'sent') $query->where('is_sent', true);
-            elseif ($status === 'pending') $query->where('is_sent', false);
+            if ($status === 'sent') {
+                $query->havingRaw('MAX(is_sent) = 1');
+            } elseif ($status === 'pending') {
+                $query->havingRaw('MAX(is_sent) = 0');
+            }
         }
 
-        $notifications = $query->paginate(20)->withQueryString();
+        $campaigns = $query->paginate(20)->withQueryString();
 
-        return view('admin.notifications.index', compact('notifications'));
+        return view('admin.notifications.index', compact('campaigns'));
     }
 
     public function create()
@@ -51,9 +69,12 @@ class NotificationController extends Controller
             'scheduled_at' => 'nullable|date|after_or_equal:now',
         ]);
 
+        $now = now();
+        $insertData = [];
+
         foreach ($request->user_ids as $userId) {
             foreach ($request->channels as $channel) {
-                Notification::create([
+                $insertData[] = [
                     'user_id' => $userId,
                     'title' => $request->title,
                     'content' => $request->content,
@@ -61,22 +82,61 @@ class NotificationController extends Controller
                     'channel' => $channel,
                     'scheduled_at' => $request->scheduled_at,
                     'is_sent' => false,
-                ]);
+                    'is_read' => false,
+                    'created_at' => $now,
+                ];
             }
         }
 
-        return redirect()->route('admin.notifications.index')->with('success', 'Đã tạo thông báo thành công.');
+        // Bulk insert to prevent N+1 queries
+        foreach (array_chunk($insertData, 500) as $chunk) {
+            Notification::insert($chunk);
+        }
+
+        // Dispatch Email jobs
+        $emailNotifications = Notification::where('created_at', $now)
+            ->where('title', $request->title)
+            ->where('channel', 'email')
+            ->where(function($q) {
+                $q->whereNull('scheduled_at')
+                  ->orWhere('scheduled_at', '<=', now());
+            })
+            ->get();
+
+        foreach ($emailNotifications as $notification) {
+            \App\Jobs\SendEmailNotificationJob::dispatch($notification->id);
+        }
+
+        return redirect()->route('admin.notifications.index')->with('success', 'Đã tạo và đưa vào hàng đợi thông báo thành công.');
     }
 
-    public function destroy(Notification $notification)
+    public function destroy(Request $request)
     {
-        $notification->delete();
-        return back()->with('success', 'Đã xoá thông báo.');
+        $request->validate([
+            'title' => 'required|string',
+            'created_at' => 'required|date',
+        ]);
+
+        // Delete all notifications in this campaign
+        Notification::where('title', $request->title)
+            ->where('created_at', $request->created_at)
+            ->delete();
+
+        return back()->with('success', 'Đã xoá chiến dịch thông báo.');
     }
 
-    public function resend(Notification $notification)
+    public function resend(Request $request)
     {
-        $notification->update(['is_sent' => false]);
-        return back()->with('success', 'Đã đặt lại trạng thái để gửi lại thông báo.');
+        $request->validate([
+            'title' => 'required|string',
+            'created_at' => 'required|date',
+        ]);
+
+        Notification::where('title', $request->title)
+            ->where('created_at', $request->created_at)
+            ->where('channel', 'email')
+            ->update(['is_sent' => false]);
+
+        return back()->with('success', 'Đã đặt lại trạng thái để gửi lại thông báo qua Email.');
     }
 }

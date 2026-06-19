@@ -1,0 +1,63 @@
+<?php
+
+namespace App\Jobs;
+
+use App\Models\Notification;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
+
+class SendEmailNotificationJob implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    protected $notificationId;
+
+    /**
+     * Create a new job instance.
+     */
+    public function __construct($notificationId)
+    {
+        $this->notificationId = $notificationId;
+    }
+
+    /**
+     * Execute the job.
+     */
+    public function handle(): void
+    {
+        $notification = Notification::with('user')->find($this->notificationId);
+
+        // Validations to ensure we should send this
+        if (!$notification || $notification->channel !== 'email' || $notification->is_sent) {
+            return;
+        }
+
+        if (!$notification->user || empty($notification->user->email)) {
+            return;
+        }
+
+        try {
+            // Render HTML content because admin can use Rich Text
+            Mail::html($notification->content, function ($message) use ($notification) {
+                $message->to($notification->user->email)
+                        ->subject($notification->title);
+            });
+
+            // Mark as sent
+            $notification->update(['is_sent' => true]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send email notification: ' . $e->getMessage(), [
+                'notification_id' => $notification->id,
+                'user_id' => $notification->user_id
+            ]);
+            
+            // Allow job to fail and retry automatically depending on queue config
+            throw $e;
+        }
+    }
+}

@@ -170,8 +170,8 @@ Route::middleware(['auth', 'role:admin'])
             Route::get('/', [\App\Http\Controllers\Admin\NotificationController::class, 'index'])->name('index');
             Route::get('/create', [\App\Http\Controllers\Admin\NotificationController::class, 'create'])->name('create');
             Route::post('/', [\App\Http\Controllers\Admin\NotificationController::class, 'store'])->name('store');
-            Route::delete('/{notification}', [\App\Http\Controllers\Admin\NotificationController::class, 'destroy'])->name('destroy');
-            Route::post('/{notification}/resend', [\App\Http\Controllers\Admin\NotificationController::class, 'resend'])->name('resend');
+            Route::delete('/', [\App\Http\Controllers\Admin\NotificationController::class, 'destroy'])->name('destroy');
+            Route::post('/resend', [\App\Http\Controllers\Admin\NotificationController::class, 'resend'])->name('resend');
         });
 
         // Nhật ký lịch hẹn
